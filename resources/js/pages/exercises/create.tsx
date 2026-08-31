@@ -1,0 +1,124 @@
+import { Form, Head } from '@inertiajs/react';
+import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
+import Heading from '@/components/heading';
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { ExerciseCategoryOption } from '@/types';
+
+type PageProps = {
+    categories: ExerciseCategoryOption[];
+};
+
+export default function ExercisesCreate({ categories }: PageProps) {
+    return (
+        <>
+            <Head title="Add Exercise" />
+
+            <div className="space-y-6 p-4">
+                <Heading
+                    title="Add Exercise"
+                    description="Create a new training exercise."
+                />
+
+                <Form
+                    {...ExerciseController.store.form()}
+                    encType="multipart/form-data"
+                    className="max-w-lg space-y-6"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <div className="grid gap-2">
+                                <Label htmlFor="category">Category</Label>
+                                <select
+                                    id="category"
+                                    name="category"
+                                    required
+                                    className="border-input bg-background text-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <option value="">
+                                        Select a category
+                                    </option>
+                                    {categories.map((cat) => (
+                                        <option
+                                            key={cat.value}
+                                            value={cat.value}
+                                        >
+                                            {cat.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.category} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="image">Image</Label>
+                                <Input
+                                    id="image"
+                                    name="image"
+                                    type="file"
+                                    accept="image/*"
+                                    required
+                                />
+                                <InputError message={errors.image} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="difficulty">Difficulty</Label>
+                                <Input
+                                    id="difficulty"
+                                    name="difficulty"
+                                    type="number"
+                                    min={1}
+                                    max={5}
+                                    required
+                                    placeholder="1-5"
+                                />
+                                <InputError message={errors.difficulty} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="description">
+                                    Description{' '}
+                                    <span className="text-muted-foreground">
+                                        (optional)
+                                    </span>
+                                </Label>
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    placeholder="Describe the exercise..."
+                                />
+                                <InputError message={errors.description} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="notes">
+                                    Notes{' '}
+                                    <span className="text-muted-foreground">
+                                        (optional)
+                                    </span>
+                                </Label>
+                                <textarea
+                                    id="notes"
+                                    name="notes"
+                                    className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    placeholder="Any additional notes..."
+                                />
+                                <InputError message={errors.notes} />
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <Button disabled={processing}>
+                                    Create Exercise
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </Form>
+            </div>
+        </>
+    );
+}

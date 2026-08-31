@@ -35,11 +35,39 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        $schools = [];
+        $currentSchoolId = null;
+        $currentSchoolRole = null;
+
+        if ($user) {
+            $schools = $user->schools()->select('schools.id', 'schools.name')->get()->map(fn ($school) => [
+                'id' => $school->id,
+                'name' => $school->name,
+            ])->all();
+
+            if (count($schools) > 0) {
+                $sessionSchoolId = $request->session()->get('current_school_id');
+                $schoolIds = array_column($schools, 'id');
+
+                $currentSchoolId = in_array($sessionSchoolId, $schoolIds)
+                    ? $sessionSchoolId
+                    : $schools[0]['id'];
+
+                $currentSchool = $user->schools()->where('schools.id', $currentSchoolId)->first();
+                $currentSchoolRole = $currentSchool?->pivot->role;
+            }
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'schools' => $schools,
+                'currentSchoolId' => $currentSchoolId,
+                'currentSchoolRole' => $currentSchoolRole,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

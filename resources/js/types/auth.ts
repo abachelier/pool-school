@@ -9,6 +9,14 @@ export type User = {
     [key: string]: unknown;
 };
 
+export type SchoolSummary = {
+    id: number;
+    name: string;
+};
+
 export type Auth = {
     user: User;
+    schools: SchoolSummary[];
+    currentSchoolId: number | null;
+    currentSchoolRole: 'admin' | 'member' | null;
 };
