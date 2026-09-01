@@ -74,7 +74,9 @@ Use Wayfinder with the `<Form>` component:
 <!-- Wayfinder Form (React) -->
 
 ```tsx
-<Form {...store.form()}><input name="title" /></Form>
+<Form {...store.form()}>
+    <input name="title" />
+</Form>
 ```
 
 ## Verification
