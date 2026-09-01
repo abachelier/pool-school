@@ -8,6 +8,7 @@ use App\Http\Requests\Schools\UpdateSchoolRequest;
 use App\Models\School;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,25 +47,13 @@ class SchoolController extends Controller
     }
 
     /**
-     * Display the specified school.
+     * Display the specified school settings.
      */
     public function show(Request $request, School $school): Response
     {
-        abort_unless($school->hasMember($request->user()), 403);
-
-        return Inertia::render('schools/show', [
-            'school' => $school,
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified school.
-     */
-    public function edit(Request $request, School $school): Response
-    {
         abort_unless($school->hasAdmin($request->user()), 403);
 
-        return Inertia::render('schools/edit', [
+        return Inertia::render('schools/show', [
             'school' => $school,
         ]);
     }
@@ -74,7 +63,16 @@ class SchoolController extends Controller
      */
     public function update(UpdateSchoolRequest $request, School $school): RedirectResponse
     {
-        $school->update($request->validated());
+        $data = $request->safe()->except('logo');
+
+        if ($request->hasFile('logo')) {
+            if ($school->logo_path) {
+                Storage::disk('public')->delete($school->logo_path);
+            }
+            $data['logo_path'] = $request->file('logo')->store('schools', 'public');
+        }
+
+        $school->update($data);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('School updated.')]);
 

@@ -1,9 +1,16 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { Pencil } from 'lucide-react';
+import { Pencil, X } from 'lucide-react';
+import { useState } from 'react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { edit } from '@/routes/exercises';
 import type { Exercise } from '@/types';
 
@@ -12,6 +19,8 @@ type PageProps = {
 };
 
 export default function ExercisesShow({ exercise }: PageProps) {
+    const [imageOpen, setImageOpen] = useState(false);
+
     return (
         <>
             <Head title={exercise.name} />
@@ -77,9 +86,27 @@ export default function ExercisesShow({ exercise }: PageProps) {
                         <img
                             src={`/storage/${exercise.image_path}`}
                             alt={exercise.name}
-                            className="h-48 w-full rounded-md object-cover"
+                            className="h-48 w-full cursor-pointer rounded-md object-cover"
+                            onClick={() => setImageOpen(true)}
                         />
                     </div>
+
+                    <Dialog open={imageOpen} onOpenChange={setImageOpen}>
+                        <DialogContent className="flex max-h-[95vh] max-w-[95vw] items-center justify-center border-none bg-black/90 p-0">
+                            <DialogTitle className="sr-only">
+                                {exercise.name}
+                            </DialogTitle>
+                            <DialogClose className="absolute top-3 right-3 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black/70">
+                                <X className="size-5" />
+                                <span className="sr-only">Close</span>
+                            </DialogClose>
+                            <img
+                                src={`/storage/${exercise.image_path}`}
+                                alt={exercise.name}
+                                className="max-h-[90vh] max-w-full object-contain"
+                            />
+                        </DialogContent>
+                    </Dialog>
 
                     {exercise.category_label && (
                         <div>
@@ -97,6 +124,15 @@ export default function ExercisesShow({ exercise }: PageProps) {
                         <p className="mt-1">{exercise.difficulty}/5</p>
                     </div>
 
+                    {exercise.default_max_score !== null && (
+                        <div>
+                            <h3 className="text-muted-foreground text-sm font-medium">
+                                Default Max Score
+                            </h3>
+                            <p className="mt-1">{exercise.default_max_score}</p>
+                        </div>
+                    )}
+
                     {exercise.description && (
                         <div>
                             <h3 className="text-muted-foreground text-sm font-medium">
@@ -104,17 +140,6 @@ export default function ExercisesShow({ exercise }: PageProps) {
                             </h3>
                             <p className="mt-1 whitespace-pre-wrap">
                                 {exercise.description}
-                            </p>
-                        </div>
-                    )}
-
-                    {exercise.notes && (
-                        <div>
-                            <h3 className="text-muted-foreground text-sm font-medium">
-                                Notes
-                            </h3>
-                            <p className="mt-1 whitespace-pre-wrap">
-                                {exercise.notes}
                             </p>
                         </div>
                     )}

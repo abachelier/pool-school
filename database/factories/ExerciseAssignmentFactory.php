@@ -24,7 +24,8 @@ class ExerciseAssignmentFactory extends Factory
             'session_id' => TrainingSession::factory(),
             'pupil_id' => Pupil::factory(),
             'exercise_id' => Exercise::factory(),
-            'result_value' => null,
+            'score' => null,
+            'max_score' => null,
             'notes' => null,
             'is_completed' => false,
         ];
@@ -36,7 +37,8 @@ class ExerciseAssignmentFactory extends Factory
     public function completed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'result_value' => fake()->word(),
+            'score' => fake()->numberBetween(0, 20),
+            'max_score' => 20,
             'is_completed' => true,
         ]);
     }

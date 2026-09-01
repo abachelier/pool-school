@@ -29,7 +29,7 @@ class UpdateExerciseRequest extends FormRequest
             'image' => ['nullable', 'image', 'max:5120'],
             'description' => ['nullable', 'string', 'max:5000'],
             'difficulty' => ['required', 'integer', 'min:1', 'max:5'],
-            'notes' => ['nullable', 'string', 'max:5000'],
+            'default_max_score' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }

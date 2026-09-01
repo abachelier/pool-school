@@ -12,16 +12,14 @@ type PageProps = {
     school: School;
     session: TrainingSession;
     exercises: Exercise[];
-    selectedExerciseIds: number[];
 };
 
 export default function SessionExercises({
     school,
     session,
     exercises,
-    selectedExerciseIds,
 }: PageProps) {
-    const [selected, setSelected] = useState<number[]>(selectedExerciseIds);
+    const [selected, setSelected] = useState<number[]>([]);
     const [processing, setProcessing] = useState(false);
 
     function toggleExercise(exerciseId: number) {
@@ -43,19 +41,15 @@ export default function SessionExercises({
         );
     }
 
-    const hasChanges =
-        JSON.stringify([...selected].sort()) !==
-        JSON.stringify([...selectedExerciseIds].sort());
-
     return (
         <>
-            <Head title="Choose Exercises" />
+            <Head title="Add Exercises" />
 
             <div className="space-y-6 p-4">
                 <div className="flex items-center justify-between">
                     <Heading
-                        title="Choose Exercises"
-                        description="Select exercises for this session."
+                        title="Add Exercises"
+                        description="Select exercises to add to this session."
                     />
 
                     <div className="flex items-center gap-2">
@@ -72,16 +66,16 @@ export default function SessionExercises({
                         </Button>
                         <Button
                             onClick={handleSave}
-                            disabled={processing || !hasChanges}
+                            disabled={processing || selected.length === 0}
                         >
-                            {processing ? 'Saving...' : 'Save Selection'}
+                            {processing ? 'Saving...' : 'Add Selected'}
                         </Button>
                     </div>
                 </div>
 
                 {exercises.length === 0 ? (
                     <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center">
-                        No exercises available. Create some exercises first.
+                        All exercises have been added to this session.
                     </div>
                 ) : (
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

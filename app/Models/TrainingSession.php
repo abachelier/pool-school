@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\SessionStatus;
 use Database\Factories\TrainingSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,12 +15,12 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $school_id
  * @property Carbon $date
- * @property SessionStatus $status
+ * @property bool $is_archived
  * @property string|null $notes
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['date', 'status', 'notes'])]
+#[Fillable(['date', 'is_archived', 'notes'])]
 class TrainingSession extends Model
 {
     /** @use HasFactory<TrainingSessionFactory> */
@@ -38,7 +37,7 @@ class TrainingSession extends Model
     {
         return [
             'date' => 'date',
-            'status' => SessionStatus::class,
+            'is_archived' => 'boolean',
         ];
     }
 

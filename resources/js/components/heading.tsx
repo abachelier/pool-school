@@ -4,11 +4,13 @@ export default function Heading({
     title,
     description,
     badge,
+    actions,
     variant = 'default',
 }: {
     title: string;
     description?: string;
     badge?: ReactNode;
+    actions?: ReactNode;
     variant?: 'default' | 'small';
 }) {
     return (
@@ -24,6 +26,7 @@ export default function Heading({
                     {title}
                 </h2>
                 {badge}
+                {actions}
             </div>
             {description && (
                 <p className="text-muted-foreground text-sm">{description}</p>

@@ -56,6 +56,30 @@ test('archived exercises are shown when filtered', function () {
     );
 });
 
+test('exercises are ordered by category then difficulty then id', function () {
+    $user = User::factory()->create();
+    School::factory()->forUser($user)->create();
+
+    $topSpin3 = Exercise::factory()->create(['category' => ExerciseCategory::TopSpin, 'difficulty' => 3]);
+    $basicPotting1 = Exercise::factory()->create(['category' => ExerciseCategory::BasicPotting, 'difficulty' => 1]);
+    $basicPotting3 = Exercise::factory()->create(['category' => ExerciseCategory::BasicPotting, 'difficulty' => 3]);
+    $topSpin1 = Exercise::factory()->create(['category' => ExerciseCategory::TopSpin, 'difficulty' => 1]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('exercises.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('exercises/index')
+        ->has('exercises', 4)
+        ->where('exercises.0.id', $basicPotting1->id)
+        ->where('exercises.1.id', $basicPotting3->id)
+        ->where('exercises.2.id', $topSpin1->id)
+        ->where('exercises.3.id', $topSpin3->id)
+    );
+});
+
 test('categories are provided to index page', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
@@ -97,7 +121,6 @@ test('teacher can create an exercise', function () {
             'image' => UploadedFile::fake()->image('exercise.jpg'),
             'description' => 'Practice stop shots from various positions.',
             'difficulty' => 3,
-            'notes' => 'Use center cue ball hit.',
         ]);
 
     $response->assertSessionHasNoErrors();
@@ -108,11 +131,31 @@ test('teacher can create an exercise', function () {
     expect($exercise->category)->toBe(ExerciseCategory::StopShot);
     expect($exercise->description)->toBe('Practice stop shots from various positions.');
     expect($exercise->difficulty)->toBe(3);
-    expect($exercise->notes)->toBe('Use center cue ball hit.');
+    expect($exercise->default_max_score)->toBeNull();
     expect($exercise->is_active)->toBeTrue();
     Storage::disk('public')->assertExists($exercise->image_path);
 
     $response->assertRedirect(route('exercises.show', $exercise));
+});
+
+test('teacher can create an exercise with a default max score', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    School::factory()->forUser($user)->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('exercises.store'), [
+            'category' => 'stop_shot',
+            'image' => UploadedFile::fake()->image('exercise.jpg'),
+            'difficulty' => 3,
+            'default_max_score' => 20,
+        ]);
+
+    $response->assertSessionHasNoErrors();
+
+    $exercise = Exercise::first();
+    expect($exercise->default_max_score)->toBe(20);
 });
 
 test('image is required when creating an exercise', function () {
@@ -245,7 +288,6 @@ test('teacher can update an exercise', function () {
             'image' => UploadedFile::fake()->image('updated.jpg'),
             'description' => 'Updated description.',
             'difficulty' => 5,
-            'notes' => 'Updated notes.',
         ]);
 
     $response->assertSessionHasNoErrors();
@@ -255,7 +297,6 @@ test('teacher can update an exercise', function () {
     expect($exercise->category)->toBe(ExerciseCategory::BackSpin);
     expect($exercise->description)->toBe('Updated description.');
     expect($exercise->difficulty)->toBe(5);
-    expect($exercise->notes)->toBe('Updated notes.');
     Storage::disk('public')->assertExists($exercise->image_path);
 });
 
@@ -275,6 +316,25 @@ test('teacher can update an exercise without changing image', function () {
 
     $exercise->refresh();
     expect($exercise->image_path)->toBe('exercises/original.jpg');
+});
+
+test('teacher can update the default max score', function () {
+    $user = User::factory()->create();
+    School::factory()->forUser($user)->create();
+    $exercise = Exercise::factory()->create(['default_max_score' => null]);
+
+    $response = $this
+        ->actingAs($user)
+        ->put(route('exercises.update', $exercise), [
+            'category' => $exercise->category->value,
+            'difficulty' => $exercise->difficulty,
+            'default_max_score' => 15,
+        ]);
+
+    $response->assertSessionHasNoErrors();
+
+    $exercise->refresh();
+    expect($exercise->default_max_score)->toBe(15);
 });
 
 test('exercise name is dynamically generated', function () {

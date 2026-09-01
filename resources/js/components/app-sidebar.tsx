@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Calendar, Dumbbell, LayoutGrid, Settings, Users } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -8,7 +8,13 @@ import {
     SidebarContent,
     SidebarFooter,
     SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarSeparator,
+    useSidebar,
 } from '@/components/ui/sidebar';
+import { useCurrentUrl } from '@/hooks/use-current-url';
 import { dashboard } from '@/routes';
 import { index as exercisesIndex } from '@/routes/exercises';
 import { show as schoolsShow } from '@/routes/schools';
@@ -18,6 +24,8 @@ import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const { auth } = usePage().props;
+    const { isCurrentUrl } = useCurrentUrl();
+    const { setOpenMobile } = useSidebar();
 
     const mainNavItems: NavItem[] = [
         {
@@ -45,21 +53,35 @@ export function AppSidebar() {
             href: sessionsIndex.url(auth.currentSchoolId),
             icon: Calendar,
         });
-
-        if (auth.currentSchoolRole === 'admin') {
-            mainNavItems.push({
-                title: 'Settings',
-                href: schoolsShow.url(auth.currentSchoolId),
-                icon: Settings,
-            });
-        }
     }
+
+    const settingsHref = auth.currentSchoolId && auth.currentSchoolRole === 'admin'
+        ? schoolsShow.url(auth.currentSchoolId)
+        : null;
 
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SchoolSwitcher />
+                {settingsHref && (
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isCurrentUrl(settingsHref)}
+                                tooltip={{ children: 'Settings' }}
+                            >
+                                <Link href={settingsHref} onClick={() => setOpenMobile(false)}>
+                                    <Settings />
+                                    <span>Settings</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                )}
             </SidebarHeader>
+
+            <SidebarSeparator />
 
             <SidebarContent>
                 <NavMain items={mainNavItems} />

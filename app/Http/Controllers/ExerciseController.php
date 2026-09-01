@@ -28,7 +28,7 @@ class ExerciseController extends Controller
         }
 
         return Inertia::render('exercises/index', [
-            'exercises' => $query->latest()->get(),
+            'exercises' => $query->orderBy('category')->orderBy('difficulty')->orderBy('id')->get(),
             'isShowingArchived' => $request->boolean('archived'),
             'categories' => collect(ExerciseCategory::cases())->map(fn (ExerciseCategory $c) => [
                 'value' => $c->value,

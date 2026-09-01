@@ -1,9 +1,10 @@
-import { Head, Link } from '@inertiajs/react';
-import { Pencil, Users } from 'lucide-react';
+import { Form, Head } from '@inertiajs/react';
+import SchoolController from '@/actions/App/Http/Controllers/SchoolController';
 import Heading from '@/components/heading';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { edit as schoolsEdit } from '@/routes/schools';
-import { index as pupilsIndex } from '@/routes/schools/pupils';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import type { School } from '@/types';
 
 type PageProps = {
@@ -13,47 +14,81 @@ type PageProps = {
 export default function SchoolsShow({ school }: PageProps) {
     return (
         <>
-            <Head title={school.name} />
+            <Head title="Settings" />
 
             <div className="space-y-6 p-4">
-                <div className="flex items-center justify-between">
-                    <Heading title={school.name} />
+                <Heading title="Settings" />
 
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href={schoolsEdit.url(school.id)}>
-                                <Pencil className="mr-1 size-4" />
-                                Edit
-                            </Link>
-                        </Button>
-                        <Button asChild>
-                            <Link href={pupilsIndex.url(school.id)}>
-                                <Users className="mr-1 size-4" />
-                                Manage Pupils
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
+                <Form
+                    {...SchoolController.update.form(school.id)}
+                    encType="multipart/form-data"
+                    options={{
+                        preserveScroll: true,
+                    }}
+                    className="max-w-lg space-y-6"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <div className="grid gap-2">
+                                <Label htmlFor="name">Name</Label>
+                                <Input
+                                    id="name"
+                                    name="name"
+                                    required
+                                    defaultValue={school.name}
+                                    placeholder="School name"
+                                />
+                                <InputError message={errors.name} />
+                            </div>
 
-                <div className="max-w-lg space-y-4 rounded-lg border p-6">
-                    <div>
-                        <h3 className="text-muted-foreground text-sm font-medium">
-                            Name
-                        </h3>
-                        <p className="mt-1">{school.name}</p>
-                    </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="logo">
+                                    Logo{' '}
+                                    <span className="text-muted-foreground">
+                                        (optional)
+                                    </span>
+                                </Label>
+                                {school.logo_path && (
+                                    <img
+                                        src={`/storage/${school.logo_path}`}
+                                        alt={school.name}
+                                        className="h-16 w-16 rounded-md object-cover"
+                                    />
+                                )}
+                                <Input
+                                    id="logo"
+                                    name="logo"
+                                    type="file"
+                                    accept="image/*"
+                                />
+                                <InputError message={errors.logo} />
+                            </div>
 
-                    {school.description && (
-                        <div>
-                            <h3 className="text-muted-foreground text-sm font-medium">
-                                Description
-                            </h3>
-                            <p className="mt-1 whitespace-pre-wrap">
-                                {school.description}
-                            </p>
-                        </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="description">
+                                    Description{' '}
+                                    <span className="text-muted-foreground">
+                                        (optional)
+                                    </span>
+                                </Label>
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    defaultValue={school.description ?? ''}
+                                    placeholder="A short description of the school..."
+                                />
+                                <InputError message={errors.description} />
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <Button disabled={processing}>
+                                    Save Changes
+                                </Button>
+                            </div>
+                        </>
                     )}
-                </div>
+                </Form>
             </div>
         </>
     );

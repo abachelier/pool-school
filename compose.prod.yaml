@@ -1,0 +1,66 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: pool-school:latest
+        restart: unless-stopped
+        ports:
+            - '${APP_PORT:-80}:80'
+        environment:
+            APP_NAME: '${APP_NAME:-PoolSchool}'
+            APP_ENV: production
+            APP_KEY: '${APP_KEY}'
+            APP_DEBUG: 'false'
+            APP_URL: '${APP_URL:-http://localhost}'
+            DB_CONNECTION: pgsql
+            DB_HOST: pgsql
+            DB_PORT: 5432
+            DB_DATABASE: '${DB_DATABASE:-pool_school}'
+            DB_USERNAME: '${DB_USERNAME:-pool_school}'
+            DB_PASSWORD: '${DB_PASSWORD}'
+            SESSION_DRIVER: database
+            QUEUE_CONNECTION: database
+            CACHE_STORE: database
+            FILESYSTEM_DISK: public
+            MAIL_MAILER: '${MAIL_MAILER:-smtp}'
+            MAIL_HOST: '${MAIL_HOST:-}'
+            MAIL_PORT: '${MAIL_PORT:-587}'
+            MAIL_USERNAME: '${MAIL_USERNAME:-}'
+            MAIL_PASSWORD: '${MAIL_PASSWORD:-}'
+            MAIL_FROM_ADDRESS: '${MAIL_FROM_ADDRESS:-hello@example.com}'
+            MAIL_FROM_NAME: '${MAIL_FROM_NAME:-PoolSchool}'
+        volumes:
+            - app-storage:/var/www/html/storage/app
+        networks:
+            - pool-school
+        depends_on:
+            pgsql:
+                condition: service_healthy
+
+    pgsql:
+        image: 'postgres:18-alpine'
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: '${DB_DATABASE:-pool_school}'
+            POSTGRES_USER: '${DB_USERNAME:-pool_school}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD}'
+        volumes:
+            - pgsql-data:/var/lib/postgresql/data
+        networks:
+            - pool-school
+        healthcheck:
+            test: ['CMD', 'pg_isready', '-q', '-d', '${DB_DATABASE:-pool_school}', '-U', '${DB_USERNAME:-pool_school}']
+            interval: 10s
+            retries: 5
+            timeout: 5s
+
+networks:
+    pool-school:
+        driver: bridge
+
+volumes:
+    app-storage:
+        driver: local
+    pgsql-data:
+        driver: local

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\SessionStatus;
 use App\Http\Requests\Sessions\StoreSessionRequest;
-use App\Http\Requests\Sessions\UpdateSessionRequest;
 use App\Models\Exercise;
+use App\Models\ExerciseAssignment;
+use App\Models\Pupil;
 use App\Models\School;
 use App\Models\TrainingSession;
 use Illuminate\Http\RedirectResponse;
@@ -22,14 +22,18 @@ class TrainingSessionController extends Controller
     {
         abort_unless($school->hasMember($request->user()), 403);
 
+        $isShowingArchived = $request->boolean('archived');
+
         $sessions = $school->sessions()
             ->with('pupils')
+            ->where('is_archived', $isShowingArchived)
             ->latest('date')
             ->get();
 
         return Inertia::render('sessions/index', [
             'school' => $school,
             'sessions' => $sessions,
+            'isShowingArchived' => $isShowingArchived,
         ]);
     }
 
@@ -57,7 +61,6 @@ class TrainingSessionController extends Controller
         $session = $school->sessions()->create([
             'date' => $validated['date'],
             'notes' => $validated['notes'] ?? null,
-            'status' => SessionStatus::Planned,
         ]);
 
         // Create exercise assignments if provided
@@ -84,105 +87,71 @@ class TrainingSessionController extends Controller
 
         $session->load(['exerciseAssignments.pupil', 'exerciseAssignments.exercise']);
 
-        // Group assignments by pupil for the view
-        $pupilAssignments = $session->exerciseAssignments
+        $assignedExerciseIds = $session->exerciseAssignments->pluck('exercise_id')->unique();
+
+        $sessionExercises = $session->exercises->map(fn (Exercise $exercise) => [
+            ...$exercise->toArray(),
+            'has_pupil_assignment' => $assignedExerciseIds->contains($exercise->id),
+        ]);
+
+        // Build pupil rows with assignments keyed by exercise_id for the table
+        $pupilRows = $session->exerciseAssignments
             ->groupBy('pupil_id')
             ->map(function ($assignments) {
+                $pupil = $assignments->first()->pupil;
+
                 return [
-                    'pupil' => $assignments->first()->pupil,
-                    'assignments' => $assignments->map(fn ($a) => [
+                    'pupil' => ['id' => $pupil->id, 'name' => $pupil->name],
+                    'assignments' => $assignments->keyBy('exercise_id')->map(fn ($a) => [
                         'id' => $a->id,
-                        'exercise' => $a->exercise,
-                        'result_value' => $a->result_value,
-                        'notes' => $a->notes,
-                        'is_completed' => $a->is_completed,
-                    ])->values(),
+                        'score' => $a->score,
+                        'max_score' => $a->max_score,
+                    ]),
                 ];
             })
             ->values();
 
+        $assignedPupilIds = $session->exerciseAssignments->pluck('pupil_id')->unique();
+
+        $availablePupils = $school->pupils()
+            ->active()
+            ->whereNotIn('id', $assignedPupilIds)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('sessions/show', [
             'school' => $school,
             'session' => $session,
-            'pupilAssignments' => $pupilAssignments,
-            'sessionExercises' => $session->exercises,
+            'sessionExercises' => $sessionExercises,
+            'pupilRows' => $pupilRows,
+            'availablePupils' => $availablePupils,
         ]);
     }
 
     /**
-     * Show the form for editing the specified training session.
+     * Archive the specified training session.
      */
-    public function edit(Request $request, School $school, TrainingSession $session): Response
+    public function archive(Request $request, School $school, TrainingSession $session): RedirectResponse
     {
         abort_unless($school->hasMember($request->user()), 403);
 
-        $session->load(['exerciseAssignments.pupil', 'exerciseAssignments.exercise']);
+        $session->update(['is_archived' => true]);
 
-        return Inertia::render('sessions/edit', [
-            'school' => $school,
-            'session' => $session,
-            'pupils' => $school->pupils()->active()->orderBy('name')->get(),
-            'exercises' => Exercise::active()->orderBy('category')->orderBy('difficulty')->get(),
-            'existingAssignments' => $session->exerciseAssignments,
-        ]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Session archived.')]);
+
+        return to_route('schools.sessions.index', $school);
     }
 
     /**
-     * Update the specified training session.
+     * Restore an archived training session.
      */
-    public function update(UpdateSessionRequest $request, School $school, TrainingSession $session): RedirectResponse
-    {
-        $validated = $request->validated();
-
-        $session->update([
-            'date' => $validated['date'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
-
-        // Sync exercise assignments
-        $session->exerciseAssignments()->delete();
-
-        if (! empty($validated['assignments'])) {
-            foreach ($validated['assignments'] as $assignment) {
-                $session->exerciseAssignments()->create([
-                    'pupil_id' => $assignment['pupil_id'],
-                    'exercise_id' => $assignment['exercise_id'],
-                    'result_value' => $assignment['result_value'] ?? null,
-                    'notes' => $assignment['notes'] ?? null,
-                    'is_completed' => $assignment['is_completed'] ?? false,
-                ]);
-            }
-        }
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Session updated.')]);
-
-        return to_route('schools.sessions.show', [$school, $session]);
-    }
-
-    /**
-     * Mark the specified training session as completed.
-     */
-    public function complete(Request $request, School $school, TrainingSession $session): RedirectResponse
+    public function restore(Request $request, School $school, TrainingSession $session): RedirectResponse
     {
         abort_unless($school->hasMember($request->user()), 403);
 
-        $session->update(['status' => SessionStatus::Completed]);
+        $session->update(['is_archived' => false]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Session completed.')]);
-
-        return to_route('schools.sessions.show', [$school, $session]);
-    }
-
-    /**
-     * Mark the specified training session as in progress.
-     */
-    public function start(Request $request, School $school, TrainingSession $session): RedirectResponse
-    {
-        abort_unless($school->hasMember($request->user()), 403);
-
-        $session->update(['status' => SessionStatus::InProgress]);
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Session started.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Session restored.')]);
 
         return to_route('schools.sessions.show', [$school, $session]);
     }
@@ -194,19 +163,23 @@ class TrainingSessionController extends Controller
     {
         abort_unless($school->hasMember($request->user()), 403);
 
-        $exercises = Exercise::active()->orderBy('category')->orderBy('difficulty')->get();
-        $selectedExerciseIds = $session->exercises()->pluck('exercises.id')->toArray();
+        $attachedIds = $session->exercises()->pluck('exercises.id');
+
+        $exercises = Exercise::active()
+            ->whereNotIn('id', $attachedIds)
+            ->orderBy('category')
+            ->orderBy('difficulty')
+            ->get();
 
         return Inertia::render('sessions/exercises', [
             'school' => $school,
             'session' => $session,
             'exercises' => $exercises,
-            'selectedExerciseIds' => $selectedExerciseIds,
         ]);
     }
 
     /**
-     * Sync exercises for a session.
+     * Add exercises to a session.
      */
     public function syncExercises(Request $request, School $school, TrainingSession $session): RedirectResponse
     {
@@ -217,9 +190,104 @@ class TrainingSessionController extends Controller
             'exercise_ids.*' => ['integer', 'exists:exercises,id'],
         ]);
 
-        $session->exercises()->sync($validated['exercise_ids'] ?? []);
+        $newIds = collect($validated['exercise_ids'] ?? [])
+            ->diff($session->exercises()->pluck('exercises.id'))
+            ->values()
+            ->all();
+
+        $session->exercises()->attach($newIds);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Session exercises updated.')]);
+
+        return to_route('schools.sessions.show', [$school, $session]);
+    }
+
+    /**
+     * Detach an exercise from a session.
+     */
+    public function detachExercise(Request $request, School $school, TrainingSession $session, Exercise $exercise): RedirectResponse
+    {
+        abort_unless($school->hasMember($request->user()), 403);
+
+        $hasPupilAssignment = $session->exerciseAssignments()
+            ->where('exercise_id', $exercise->id)
+            ->exists();
+
+        if ($hasPupilAssignment) {
+            return back()->withErrors([
+                'exercise' => __('Cannot remove an exercise that has pupil assignments.'),
+            ]);
+        }
+
+        $session->exercises()->detach($exercise->id);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Exercise removed from session.')]);
+
+        return to_route('schools.sessions.show', [$school, $session]);
+    }
+
+    /**
+     * Add a pupil to the session by creating assignments for all session exercises.
+     */
+    public function addPupil(Request $request, School $school, TrainingSession $session): RedirectResponse
+    {
+        abort_unless($school->hasMember($request->user()), 403);
+
+        $validated = $request->validate([
+            'pupil_id' => ['required', 'integer', 'exists:pupils,id'],
+        ]);
+
+        $pupil = Pupil::findOrFail($validated['pupil_id']);
+        abort_unless($pupil->school_id === $school->id, 422);
+
+        $exercises = $session->exercises()->get(['exercises.id', 'exercises.default_max_score']);
+
+        foreach ($exercises as $exercise) {
+            $session->exerciseAssignments()->firstOrCreate(
+                [
+                    'pupil_id' => $pupil->id,
+                    'exercise_id' => $exercise->id,
+                ],
+                [
+                    'max_score' => $exercise->default_max_score,
+                ],
+            );
+        }
+
+        return to_route('schools.sessions.show', [$school, $session]);
+    }
+
+    /**
+     * Remove a pupil from the session by deleting all their assignments.
+     */
+    public function removePupil(Request $request, School $school, TrainingSession $session, Pupil $pupil): RedirectResponse
+    {
+        abort_unless($school->hasMember($request->user()), 403);
+
+        $session->exerciseAssignments()
+            ->where('pupil_id', $pupil->id)
+            ->delete();
+
+        return to_route('schools.sessions.show', [$school, $session]);
+    }
+
+    /**
+     * Update an exercise assignment result.
+     */
+    public function updateAssignment(Request $request, School $school, TrainingSession $session, ExerciseAssignment $assignment): RedirectResponse
+    {
+        abort_unless($school->hasMember($request->user()), 403);
+        abort_unless($assignment->session_id === $session->id, 404);
+
+        $validated = $request->validate([
+            'score' => ['nullable', 'integer', 'min:0'],
+            'max_score' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $assignment->update([
+            'score' => $validated['score'],
+            'max_score' => $validated['max_score'],
+        ]);
 
         return to_route('schools.sessions.show', [$school, $session]);
     }

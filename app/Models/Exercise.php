@@ -18,12 +18,12 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property string $image_path
  * @property int $difficulty
- * @property string|null $notes
+ * @property int|null $default_max_score
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['category', 'description', 'image_path', 'difficulty', 'notes', 'is_active'])]
+#[Fillable(['category', 'description', 'image_path', 'difficulty', 'default_max_score', 'is_active'])]
 class Exercise extends Model
 {
     /** @use HasFactory<ExerciseFactory> */

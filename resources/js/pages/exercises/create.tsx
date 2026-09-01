@@ -79,6 +79,23 @@ export default function ExercisesCreate({ categories }: PageProps) {
                             </div>
 
                             <div className="grid gap-2">
+                                <Label htmlFor="default_max_score">
+                                    Default Max Score{' '}
+                                    <span className="text-muted-foreground">
+                                        (optional)
+                                    </span>
+                                </Label>
+                                <Input
+                                    id="default_max_score"
+                                    name="default_max_score"
+                                    type="number"
+                                    min={1}
+                                    placeholder="e.g. 20"
+                                />
+                                <InputError message={errors.default_max_score} />
+                            </div>
+
+                            <div className="grid gap-2">
                                 <Label htmlFor="description">
                                     Description{' '}
                                     <span className="text-muted-foreground">
@@ -92,22 +109,6 @@ export default function ExercisesCreate({ categories }: PageProps) {
                                     placeholder="Describe the exercise..."
                                 />
                                 <InputError message={errors.description} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="notes">
-                                    Notes{' '}
-                                    <span className="text-muted-foreground">
-                                        (optional)
-                                    </span>
-                                </Label>
-                                <textarea
-                                    id="notes"
-                                    name="notes"
-                                    className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="Any additional notes..."
-                                />
-                                <InputError message={errors.notes} />
                             </div>
 
                             <div className="flex items-center gap-4">

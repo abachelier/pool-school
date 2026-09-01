@@ -14,13 +14,14 @@ use Illuminate\Support\Carbon;
  * @property int $session_id
  * @property int $pupil_id
  * @property int $exercise_id
- * @property string|null $result_value
+ * @property int|null $score
+ * @property int|null $max_score
  * @property string|null $notes
  * @property bool $is_completed
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['session_id', 'pupil_id', 'exercise_id', 'result_value', 'notes', 'is_completed'])]
+#[Fillable(['session_id', 'pupil_id', 'exercise_id', 'score', 'max_score', 'notes', 'is_completed'])]
 class ExerciseAssignment extends Model
 {
     /** @use HasFactory<ExerciseAssignmentFactory> */

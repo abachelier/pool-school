@@ -13,6 +13,7 @@ import type { School, TrainingSession } from '@/types';
 type PageProps = {
     school: School;
     sessions: TrainingSession[];
+    isShowingArchived: boolean;
 };
 
 function formatDate(date: string): string {
@@ -24,31 +25,7 @@ function formatDate(date: string): string {
     });
 }
 
-function statusBadgeVariant(
-    status: TrainingSession['status'],
-): 'default' | 'outline' | 'secondary' {
-    switch (status) {
-        case 'planned':
-            return 'default';
-        case 'in_progress':
-            return 'outline';
-        case 'completed':
-            return 'secondary';
-    }
-}
-
-function statusLabel(status: TrainingSession['status']): string {
-    switch (status) {
-        case 'planned':
-            return 'Planned';
-        case 'in_progress':
-            return 'In Progress';
-        case 'completed':
-            return 'Completed';
-    }
-}
-
-export default function SessionsIndex({ school, sessions }: PageProps) {
+export default function SessionsIndex({ school, sessions, isShowingArchived }: PageProps) {
     usePoll(15000);
 
     return (
@@ -62,18 +39,32 @@ export default function SessionsIndex({ school, sessions }: PageProps) {
                         description="Manage your training sessions."
                     />
 
-                    <Button asChild>
-                        <Link href={sessionsCreate.url(school.id)}>
-                            <Plus className="mr-1 size-4" />
-                            Add Session
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" asChild>
+                            <Link
+                                href={sessionsIndex.url(school.id, {
+                                    query: isShowingArchived ? {} : { archived: '1' },
+                                })}
+                            >
+                                {isShowingArchived ? 'Active Sessions' : 'Archived'}
+                            </Link>
+                        </Button>
+                        {!isShowingArchived && (
+                            <Button asChild>
+                                <Link href={sessionsCreate.url(school.id)}>
+                                    <Plus className="mr-1 size-4" />
+                                    Add Session
+                                </Link>
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {sessions.length === 0 ? (
                     <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center">
-                        No sessions yet. Add your first session to get
-                        started.
+                        {isShowingArchived
+                            ? 'No archived sessions.'
+                            : 'No sessions yet. Add your first session to get started.'}
                     </div>
                 ) : (
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -91,13 +82,9 @@ export default function SessionsIndex({ school, sessions }: PageProps) {
                                     <h3 className="font-medium">
                                         {formatDate(session.date)}
                                     </h3>
-                                    <Badge
-                                        variant={statusBadgeVariant(
-                                            session.status,
-                                        )}
-                                    >
-                                        {statusLabel(session.status)}
-                                    </Badge>
+                                    {session.is_archived && (
+                                        <Badge variant="secondary">Archived</Badge>
+                                    )}
                                 </div>
                                 {session.pupils &&
                                     session.pupils.length > 0 && (

@@ -22,7 +22,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('schools/create', [SchoolController::class, 'create'])->name('schools.create');
         Route::get('schools/{school}', [SchoolController::class, 'show'])->name('schools.show');
-        Route::get('schools/{school}/edit', [SchoolController::class, 'edit'])->name('schools.edit');
         Route::put('schools/{school}', [SchoolController::class, 'update'])->name('schools.update');
         Route::post('schools/{school}/switch', [SchoolController::class, 'switch'])->name('schools.switch');
 
@@ -35,11 +34,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('schools/{school}/pupils/{pupil}/archive', [PupilController::class, 'archive'])->name('schools.pupils.archive');
             Route::patch('schools/{school}/pupils/{pupil}/restore', [PupilController::class, 'restore'])->name('schools.pupils.restore');
 
-            Route::resource('schools.sessions', TrainingSessionController::class)->except(['destroy'])->parameters(['sessions' => 'session']);
-            Route::patch('schools/{school}/sessions/{session}/complete', [TrainingSessionController::class, 'complete'])->name('schools.sessions.complete');
-            Route::patch('schools/{school}/sessions/{session}/start', [TrainingSessionController::class, 'start'])->name('schools.sessions.start');
+            Route::resource('schools.sessions', TrainingSessionController::class)->only(['index', 'create', 'store', 'show'])->parameters(['sessions' => 'session']);
+            Route::patch('schools/{school}/sessions/{session}/archive', [TrainingSessionController::class, 'archive'])->name('schools.sessions.archive');
+            Route::patch('schools/{school}/sessions/{session}/restore', [TrainingSessionController::class, 'restore'])->name('schools.sessions.restore');
             Route::get('schools/{school}/sessions/{session}/exercises', [TrainingSessionController::class, 'exercisesPicker'])->name('schools.sessions.exercises');
             Route::post('schools/{school}/sessions/{session}/exercises', [TrainingSessionController::class, 'syncExercises'])->name('schools.sessions.exercises.sync');
+            Route::delete('schools/{school}/sessions/{session}/exercises/{exercise}', [TrainingSessionController::class, 'detachExercise'])->name('schools.sessions.exercises.detach');
+            Route::post('schools/{school}/sessions/{session}/pupils', [TrainingSessionController::class, 'addPupil'])->name('schools.sessions.pupils.add');
+            Route::delete('schools/{school}/sessions/{session}/pupils/{pupil}', [TrainingSessionController::class, 'removePupil'])->name('schools.sessions.pupils.remove')->withoutScopedBindings();
+            Route::patch('schools/{school}/sessions/{session}/assignments/{assignment}', [TrainingSessionController::class, 'updateAssignment'])->name('schools.sessions.assignments.update')->withoutScopedBindings();
         });
     });
 });

@@ -23,7 +23,7 @@ class ExerciseFactory extends Factory
             'description' => fake()->optional()->sentence(),
             'image_path' => 'exercises/'.fake()->uuid().'.jpg',
             'difficulty' => fake()->numberBetween(1, 5),
-            'notes' => fake()->optional()->sentence(),
+            'default_max_score' => null,
             'is_active' => true,
         ];
     }

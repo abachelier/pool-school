@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\SchoolRole;
-use App\Enums\SessionStatus;
 use App\Models\Exercise;
 use App\Models\ExerciseAssignment;
 use App\Models\Pupil;
@@ -88,7 +87,7 @@ test('teacher can create a session', function () {
     expect($session)->not->toBeNull();
     expect($session->date->toDateString())->toBe('2026-03-09');
     expect($session->notes)->toBe('Focus on potting drills');
-    expect($session->status)->toBe(SessionStatus::Planned);
+    expect($session->is_archived)->toBeFalse();
     expect($session->school_id)->toBe($school->id);
 
     $response->assertRedirect(route('schools.sessions.show', [$school, $session]));
@@ -174,20 +173,24 @@ test('session show page is displayed', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('sessions/show')
         ->has('session')
-        ->has('pupilAssignments')
+        ->has('pupilRows')
+        ->has('availablePupils')
     );
 });
 
-test('session show page displays pupil assignments grouped by pupil', function () {
+test('session show page displays pupil rows with assignments keyed by exercise', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
     $session = TrainingSession::factory()->for($school)->create();
     $pupil = Pupil::factory()->for($school)->create();
     $exercise = Exercise::factory()->create();
+    $session->exercises()->attach($exercise->id);
     ExerciseAssignment::factory()->create([
         'session_id' => $session->id,
         'pupil_id' => $pupil->id,
         'exercise_id' => $exercise->id,
+        'score' => 8,
+        'max_score' => 10,
     ]);
 
     $response = $this
@@ -195,113 +198,63 @@ test('session show page displays pupil assignments grouped by pupil', function (
         ->get(route('schools.sessions.show', [$school, $session]));
 
     $response->assertInertia(fn ($page) => $page
-        ->has('pupilAssignments', 1)
-        ->where('pupilAssignments.0.pupil.id', $pupil->id)
-        ->has('pupilAssignments.0.assignments', 1)
+        ->has('pupilRows', 1)
+        ->where('pupilRows.0.pupil.id', $pupil->id)
+        ->where('pupilRows.0.pupil.name', $pupil->name)
+        ->where("pupilRows.0.assignments.{$exercise->id}.score", 8)
+        ->where("pupilRows.0.assignments.{$exercise->id}.max_score", 10)
     );
 });
 
-test('session edit page is displayed', function () {
+test('teacher can archive a session', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
     $session = TrainingSession::factory()->for($school)->create();
 
     $response = $this
         ->actingAs($user)
-        ->get(route('schools.sessions.edit', [$school, $session]));
+        ->patch(route('schools.sessions.archive', [$school, $session]));
 
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('sessions/edit')
-        ->has('session')
-        ->has('pupils')
-        ->has('exercises')
-        ->has('existingAssignments')
-    );
+    $session->refresh();
+    expect($session->is_archived)->toBeTrue();
+
+    $response->assertRedirect(route('schools.sessions.index', $school));
 });
 
-test('teacher can update a session', function () {
+test('teacher can restore an archived session', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
-    $session = TrainingSession::factory()->for($school)->create(['date' => '2026-03-09']);
-    $pupil = Pupil::factory()->for($school)->create();
+    $session = TrainingSession::factory()->for($school)->archived()->create();
 
     $response = $this
         ->actingAs($user)
-        ->put(route('schools.sessions.update', [$school, $session]), [
-            'date' => '2026-03-16',
-            'notes' => 'Updated notes',
-            'pupil_ids' => [$pupil->id],
-        ]);
-
-    $response->assertSessionHasNoErrors();
+        ->patch(route('schools.sessions.restore', [$school, $session]));
 
     $session->refresh();
-    expect($session->date->toDateString())->toBe('2026-03-16');
-    expect($session->notes)->toBe('Updated notes');
+    expect($session->is_archived)->toBeFalse();
 
     $response->assertRedirect(route('schools.sessions.show', [$school, $session]));
 });
 
-test('teacher can update a session with exercise results', function () {
+test('sessions index filters by archived status', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
-    $session = TrainingSession::factory()->for($school)->create();
-    $pupil = Pupil::factory()->for($school)->create();
-    $exercise = Exercise::factory()->create();
+    TrainingSession::factory()->for($school)->create();
+    TrainingSession::factory()->for($school)->archived()->create();
 
-    $response = $this
-        ->actingAs($user)
-        ->put(route('schools.sessions.update', [$school, $session]), [
-            'date' => $session->date->toDateString(),
-            'pupil_ids' => [$pupil->id],
-            'assignments' => [
-                [
-                    'pupil_id' => $pupil->id,
-                    'exercise_id' => $exercise->id,
-                    'result_value' => '8/10',
-                    'notes' => 'Great improvement',
-                    'is_completed' => true,
-                ],
-            ],
-        ]);
+    $this->actingAs($user)
+        ->get(route('schools.sessions.index', $school))
+        ->assertInertia(fn ($page) => $page
+            ->has('sessions', 1)
+            ->where('isShowingArchived', false)
+        );
 
-    $response->assertSessionHasNoErrors();
-
-    $assignment = ExerciseAssignment::first();
-    expect($assignment->result_value)->toBe('8/10');
-    expect($assignment->notes)->toBe('Great improvement');
-    expect($assignment->is_completed)->toBeTrue();
-});
-
-test('teacher can mark a session as started', function () {
-    $user = User::factory()->create();
-    $school = School::factory()->forUser($user)->create();
-    $session = TrainingSession::factory()->for($school)->create(['status' => SessionStatus::Planned]);
-
-    $response = $this
-        ->actingAs($user)
-        ->patch(route('schools.sessions.start', [$school, $session]));
-
-    $session->refresh();
-    expect($session->status)->toBe(SessionStatus::InProgress);
-
-    $response->assertRedirect(route('schools.sessions.show', [$school, $session]));
-});
-
-test('teacher can mark a session as completed', function () {
-    $user = User::factory()->create();
-    $school = School::factory()->forUser($user)->create();
-    $session = TrainingSession::factory()->for($school)->inProgress()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->patch(route('schools.sessions.complete', [$school, $session]));
-
-    $session->refresh();
-    expect($session->status)->toBe(SessionStatus::Completed);
-
-    $response->assertRedirect(route('schools.sessions.show', [$school, $session]));
+    $this->actingAs($user)
+        ->get(route('schools.sessions.index', [$school, 'archived' => 1]))
+        ->assertInertia(fn ($page) => $page
+            ->has('sessions', 1)
+            ->where('isShowingArchived', true)
+        );
 });
 
 test('non-member cannot access session pages', function () {
@@ -313,14 +266,12 @@ test('non-member cannot access session pages', function () {
     $this->actingAs($user)->get(route('schools.sessions.index', $school))->assertForbidden();
     $this->actingAs($user)->get(route('schools.sessions.create', $school))->assertForbidden();
     $this->actingAs($user)->get(route('schools.sessions.show', [$school, $session]))->assertForbidden();
-    $this->actingAs($user)->get(route('schools.sessions.edit', [$school, $session]))->assertForbidden();
 });
 
-test('non-member cannot create or update sessions', function () {
+test('non-member cannot create sessions', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create(); // user needs a school to pass middleware
     $school = School::factory()->create();
-    $session = TrainingSession::factory()->for($school)->create();
     $pupil = Pupil::factory()->for($school)->create();
 
     $this->actingAs($user)
@@ -329,27 +280,20 @@ test('non-member cannot create or update sessions', function () {
             'pupil_ids' => [$pupil->id],
         ])
         ->assertForbidden();
-
-    $this->actingAs($user)
-        ->put(route('schools.sessions.update', [$school, $session]), [
-            'date' => '2026-03-09',
-            'pupil_ids' => [$pupil->id],
-        ])
-        ->assertForbidden();
 });
 
-test('non-member cannot change session status', function () {
+test('non-member cannot archive or restore sessions', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create(); // user needs a school to pass middleware
     $school = School::factory()->create();
     $session = TrainingSession::factory()->for($school)->create();
 
     $this->actingAs($user)
-        ->patch(route('schools.sessions.start', [$school, $session]))
+        ->patch(route('schools.sessions.archive', [$school, $session]))
         ->assertForbidden();
 
     $this->actingAs($user)
-        ->patch(route('schools.sessions.complete', [$school, $session]))
+        ->patch(route('schools.sessions.restore', [$school, $session]))
         ->assertForbidden();
 });
 
@@ -406,11 +350,10 @@ test('exercises picker page is displayed', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('sessions/exercises')
         ->has('exercises', 3)
-        ->has('selectedExerciseIds')
     );
 });
 
-test('exercises picker shows already selected exercises', function () {
+test('exercises picker excludes already attached exercises', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
     $session = TrainingSession::factory()->for($school)->create();
@@ -423,11 +366,12 @@ test('exercises picker shows already selected exercises', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->where('selectedExerciseIds', [$exercises[0]->id, $exercises[2]->id])
+        ->has('exercises', 1)
+        ->where('exercises.0.id', $exercises[1]->id)
     );
 });
 
-test('teacher can sync exercises to a session', function () {
+test('teacher can add exercises to a session', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
     $session = TrainingSession::factory()->for($school)->create();
@@ -446,7 +390,7 @@ test('teacher can sync exercises to a session', function () {
         ->toBe([$exercises[0]->id, $exercises[1]->id]);
 });
 
-test('syncing exercises replaces previous selection', function () {
+test('adding exercises preserves previously attached exercises', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
     $session = TrainingSession::factory()->for($school)->create();
@@ -458,11 +402,12 @@ test('syncing exercises replaces previous selection', function () {
             'exercise_ids' => [$exercises[2]->id],
         ]);
 
-    expect($session->exercises()->count())->toBe(1);
-    expect($session->exercises()->first()->id)->toBe($exercises[2]->id);
+    expect($session->exercises()->count())->toBe(3);
+    expect($session->exercises()->pluck('exercises.id')->sort()->values()->toArray())
+        ->toBe([$exercises[0]->id, $exercises[1]->id, $exercises[2]->id]);
 });
 
-test('syncing with empty array removes all exercises', function () {
+test('adding with empty array preserves existing exercises', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
     $session = TrainingSession::factory()->for($school)->create();
@@ -474,7 +419,7 @@ test('syncing with empty array removes all exercises', function () {
             'exercise_ids' => [],
         ]);
 
-    expect($session->exercises()->count())->toBe(0);
+    expect($session->exercises()->count())->toBe(2);
 });
 
 test('non-member cannot access exercises picker', function () {
@@ -494,12 +439,18 @@ test('non-member cannot access exercises picker', function () {
         ->assertForbidden();
 });
 
-test('session show page includes session exercises', function () {
+test('session show page includes session exercises with pupil assignment flag', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
     $session = TrainingSession::factory()->for($school)->create();
     $exercises = Exercise::factory()->count(2)->create();
     $session->exercises()->attach($exercises->pluck('id'));
+    $pupil = Pupil::factory()->for($school)->create();
+    ExerciseAssignment::factory()->create([
+        'session_id' => $session->id,
+        'pupil_id' => $pupil->id,
+        'exercise_id' => $exercises[0]->id,
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -508,20 +459,77 @@ test('session show page includes session exercises', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->has('sessionExercises', 2)
+        ->where('sessionExercises.0.has_pupil_assignment', true)
+        ->where('sessionExercises.1.has_pupil_assignment', false)
     );
+});
+
+test('teacher can detach an exercise from a session', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $exercises = Exercise::factory()->count(2)->create();
+    $session->exercises()->attach($exercises->pluck('id'));
+
+    $response = $this
+        ->actingAs($user)
+        ->delete(route('schools.sessions.exercises.detach', [$school, $session, $exercises[0]]));
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect(route('schools.sessions.show', [$school, $session]));
+    expect($session->exercises()->count())->toBe(1);
+    expect($session->exercises()->first()->id)->toBe($exercises[1]->id);
+});
+
+test('teacher cannot detach an exercise that has pupil assignments', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $exercise = Exercise::factory()->create();
+    $session->exercises()->attach($exercise->id);
+    $pupil = Pupil::factory()->for($school)->create();
+    ExerciseAssignment::factory()->create([
+        'session_id' => $session->id,
+        'pupil_id' => $pupil->id,
+        'exercise_id' => $exercise->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->delete(route('schools.sessions.exercises.detach', [$school, $session, $exercise]));
+
+    $response->assertSessionHasErrors('exercise');
+    expect($session->exercises()->count())->toBe(1);
+});
+
+test('non-member cannot detach an exercise from a session', function () {
+    $user = User::factory()->create();
+    School::factory()->forUser($user)->create();
+    $school = School::factory()->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $exercise = Exercise::factory()->create();
+    $session->exercises()->attach($exercise->id);
+
+    $this->actingAs($user)
+        ->delete(route('schools.sessions.exercises.detach', [$school, $session, $exercise]))
+        ->assertForbidden();
+
+    expect($session->exercises()->count())->toBe(1);
 });
 
 test('historical results remain after pupil is archived', function () {
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
-    $session = TrainingSession::factory()->for($school)->completed()->create();
+    $session = TrainingSession::factory()->for($school)->create();
     $pupil = Pupil::factory()->for($school)->create();
     $exercise = Exercise::factory()->create();
+    $session->exercises()->attach($exercise->id);
     ExerciseAssignment::factory()->create([
         'session_id' => $session->id,
         'pupil_id' => $pupil->id,
         'exercise_id' => $exercise->id,
-        'result_value' => '8/10',
+        'score' => 8,
+        'max_score' => 10,
         'is_completed' => true,
     ]);
 
@@ -535,7 +543,199 @@ test('historical results remain after pupil is archived', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->has('pupilAssignments', 1)
-        ->where('pupilAssignments.0.assignments.0.result_value', '8/10')
+        ->has('pupilRows', 1)
+        ->where("pupilRows.0.assignments.{$exercise->id}.score", 8)
+        ->where("pupilRows.0.assignments.{$exercise->id}.max_score", 10)
     );
+});
+
+test('teacher can add a pupil to a session', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $pupil = Pupil::factory()->for($school)->create();
+    $exercises = Exercise::factory()->count(2)->create();
+    $session->exercises()->attach($exercises->pluck('id'));
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('schools.sessions.pupils.add', [$school, $session]), [
+            'pupil_id' => $pupil->id,
+        ]);
+
+    $response->assertRedirect(route('schools.sessions.show', [$school, $session]));
+    expect($session->exerciseAssignments()->where('pupil_id', $pupil->id)->count())->toBe(2);
+});
+
+test('adding a pupil creates assignments for all session exercises', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $pupil = Pupil::factory()->for($school)->create();
+    $exercises = Exercise::factory()->count(3)->create();
+    $session->exercises()->attach($exercises->pluck('id'));
+
+    $this->actingAs($user)
+        ->post(route('schools.sessions.pupils.add', [$school, $session]), [
+            'pupil_id' => $pupil->id,
+        ]);
+
+    $assignedExerciseIds = $session->exerciseAssignments()
+        ->where('pupil_id', $pupil->id)
+        ->pluck('exercise_id')
+        ->sort()
+        ->values();
+
+    expect($assignedExerciseIds->toArray())->toBe($exercises->pluck('id')->sort()->values()->toArray());
+});
+
+test('adding a pupil inherits default max score from exercises', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $pupil = Pupil::factory()->for($school)->create();
+    $exerciseWithDefault = Exercise::factory()->create(['default_max_score' => 20]);
+    $exerciseWithoutDefault = Exercise::factory()->create(['default_max_score' => null]);
+    $session->exercises()->attach([$exerciseWithDefault->id, $exerciseWithoutDefault->id]);
+
+    $this->actingAs($user)
+        ->post(route('schools.sessions.pupils.add', [$school, $session]), [
+            'pupil_id' => $pupil->id,
+        ]);
+
+    $assignmentWith = $session->exerciseAssignments()
+        ->where('pupil_id', $pupil->id)
+        ->where('exercise_id', $exerciseWithDefault->id)
+        ->first();
+    $assignmentWithout = $session->exerciseAssignments()
+        ->where('pupil_id', $pupil->id)
+        ->where('exercise_id', $exerciseWithoutDefault->id)
+        ->first();
+
+    expect($assignmentWith->max_score)->toBe(20);
+    expect($assignmentWithout->max_score)->toBeNull();
+});
+
+test('teacher can remove a pupil from a session', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $pupil = Pupil::factory()->for($school)->create();
+    $exercise = Exercise::factory()->create();
+    $session->exercises()->attach($exercise->id);
+    ExerciseAssignment::factory()->create([
+        'session_id' => $session->id,
+        'pupil_id' => $pupil->id,
+        'exercise_id' => $exercise->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->delete(route('schools.sessions.pupils.remove', [$school, $session, $pupil]));
+
+    $response->assertRedirect(route('schools.sessions.show', [$school, $session]));
+    expect($session->exerciseAssignments()->where('pupil_id', $pupil->id)->count())->toBe(0);
+});
+
+test('teacher can update an assignment result', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $pupil = Pupil::factory()->for($school)->create();
+    $exercise = Exercise::factory()->create();
+    $assignment = ExerciseAssignment::factory()->create([
+        'session_id' => $session->id,
+        'pupil_id' => $pupil->id,
+        'exercise_id' => $exercise->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('schools.sessions.assignments.update', [$school, $session, $assignment]), [
+            'score' => 9,
+            'max_score' => 10,
+        ]);
+
+    $response->assertRedirect(route('schools.sessions.show', [$school, $session]));
+    $assignment->refresh();
+    expect($assignment->score)->toBe(9);
+    expect($assignment->max_score)->toBe(10);
+});
+
+test('assignment result rejects non-numeric values', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $pupil = Pupil::factory()->for($school)->create();
+    $exercise = Exercise::factory()->create();
+    $assignment = ExerciseAssignment::factory()->create([
+        'session_id' => $session->id,
+        'pupil_id' => $pupil->id,
+        'exercise_id' => $exercise->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('schools.sessions.assignments.update', [$school, $session, $assignment]), [
+            'score' => 'abc',
+            'max_score' => 'xyz',
+        ]);
+
+    $response->assertSessionHasErrors(['score', 'max_score']);
+});
+
+test('non-member cannot add or remove pupils from a session', function () {
+    $user = User::factory()->create();
+    School::factory()->forUser($user)->create();
+    $school = School::factory()->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $pupil = Pupil::factory()->for($school)->create();
+
+    $this->actingAs($user)
+        ->post(route('schools.sessions.pupils.add', [$school, $session]), [
+            'pupil_id' => $pupil->id,
+        ])
+        ->assertForbidden();
+
+    $this->actingAs($user)
+        ->delete(route('schools.sessions.pupils.remove', [$school, $session, $pupil]))
+        ->assertForbidden();
+});
+
+test('available pupils excludes already assigned pupils', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $assignedPupil = Pupil::factory()->for($school)->create(['name' => 'Alice']);
+    $availablePupil = Pupil::factory()->for($school)->create(['name' => 'Bob']);
+    $exercise = Exercise::factory()->create();
+    $session->exercises()->attach($exercise->id);
+    ExerciseAssignment::factory()->create([
+        'session_id' => $session->id,
+        'pupil_id' => $assignedPupil->id,
+        'exercise_id' => $exercise->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('schools.sessions.show', [$school, $session]));
+
+    $response->assertInertia(fn ($page) => $page
+        ->has('availablePupils', 1)
+        ->where('availablePupils.0.id', $availablePupil->id)
+    );
+});
+
+test('cannot add a pupil from another school', function () {
+    $user = User::factory()->create();
+    $school = School::factory()->forUser($user)->create();
+    $otherSchool = School::factory()->create();
+    $session = TrainingSession::factory()->for($school)->create();
+    $pupil = Pupil::factory()->for($otherSchool)->create();
+
+    $this->actingAs($user)
+        ->post(route('schools.sessions.pupils.add', [$school, $session]), [
+            'pupil_id' => $pupil->id,
+        ])
+        ->assertStatus(422);
 });

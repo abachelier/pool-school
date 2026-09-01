@@ -4,7 +4,7 @@ export type TrainingSession = {
     id: number;
     school_id: number;
     date: string;
-    status: 'planned' | 'in_progress' | 'completed';
+    is_archived: boolean;
     notes: string | null;
     pupils?: Pupil[];
     created_at: string;
@@ -19,10 +19,14 @@ export type Exercise = {
     description: string | null;
     image_path: string;
     difficulty: number;
-    notes: string | null;
+    default_max_score: number | null;
     is_active: boolean;
     created_at: string;
     updated_at: string;
+};
+
+export type SessionExercise = Exercise & {
+    has_pupil_assignment: boolean;
 };
 
 export type ExerciseCategoryOption = {
@@ -35,7 +39,8 @@ export type ExerciseAssignment = {
     session_id: number;
     pupil_id: number;
     exercise_id: number;
-    result_value: string | null;
+    score: number | null;
+    max_score: number | null;
     notes: string | null;
     is_completed: boolean;
     pupil?: Pupil;
@@ -47,8 +52,25 @@ export type PupilAssignment = {
     assignments: {
         id: number;
         exercise: Exercise;
-        result_value: string | null;
+        score: number | null;
+        max_score: number | null;
         notes: string | null;
         is_completed: boolean;
     }[];
+};
+
+export type AssignmentCell = {
+    id: number;
+    score: number | null;
+    max_score: number | null;
+};
+
+export type PupilRow = {
+    pupil: { id: number; name: string };
+    assignments: Record<number, AssignmentCell>;
+};
+
+export type AvailablePupil = {
+    id: number;
+    name: string;
 };
