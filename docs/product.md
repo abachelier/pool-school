@@ -16,12 +16,12 @@ The teacher is the only user type in the first version.
 
 A teacher can:
 
-* Manage pupils
-* Create and manage exercises
-* Create weekly training sessions
-* Assign exercises to pupils for a session
-* Record the results of exercises
-* Review a pupil's history and progress
+- Manage pupils
+- Create and manage exercises
+- Create weekly training sessions
+- Assign exercises to pupils for a session
+- Record the results of exercises
+- Review a pupil's history and progress
 
 ### Pupil
 
@@ -43,9 +43,9 @@ A person who is learning 8-ball pool.
 
 A pupil has basic information such as:
 
-* Name
-* Optional contact information
-* Notes
+- Name
+- Optional contact information
+- Notes
 
 ### Exercise
 
@@ -53,11 +53,11 @@ A training exercise designed to improve a specific pool skill.
 
 An exercise should contain:
 
-* Name
-* Description/instructions
-* Optional category
-* Optional difficulty
-* Notes
+- Name
+- Description/instructions
+- Optional category
+- Optional difficulty
+- Notes
 
 Exercises are reusable and can be assigned to many pupils across different sessions.
 
@@ -67,10 +67,10 @@ A weekly training session involving one or more pupils.
 
 A session contains:
 
-* Date
-* One or more pupils
-* Exercises assigned to each pupil
-* Results recorded for each exercise
+- Date
+- One or more pupils
+- Exercises assigned to each pupil
+- Results recorded for each exercise
 
 A session represents a specific training occasion, not a recurring schedule.
 
@@ -88,26 +88,26 @@ The core workflow is:
 
 ## Product Principles
 
-* Keep the workflow fast enough to use while teaching.
-* Avoid unnecessary complexity.
-* Make recording results require as few clicks as possible.
-* Exercises should be reusable.
-* A pupil's history should be easy to understand.
-* The application should work well on a tablet or laptop.
-* The first version should focus on teachers rather than trying to support pupils too early.
+- Keep the workflow fast enough to use while teaching.
+- Avoid unnecessary complexity.
+- Make recording results require as few clicks as possible.
+- Exercises should be reusable.
+- A pupil's history should be easy to understand.
+- The application should work well on a tablet or laptop.
+- The first version should focus on teachers rather than trying to support pupils too early.
 
 ## Future Direction
 
 Later versions may include:
 
-* Pupil accounts
-* Pupil dashboard
-* Pupil progress tracking
-* Exercise recommendations
-* Statistics and charts
-* Training plans
-* Goals
-* Teacher notes and feedback visible to pupils
-* Multiple teachers
-* Multiple schools per teacher
-* Shared schools between teachers
+- Pupil accounts
+- Pupil dashboard
+- Pupil progress tracking
+- Exercise recommendations
+- Statistics and charts
+- Training plans
+- Goals
+- Teacher notes and feedback visible to pupils
+- Multiple teachers
+- Multiple schools per teacher
+- Shared schools between teachers

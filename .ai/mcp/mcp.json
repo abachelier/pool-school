@@ -1,11 +1,8 @@
 {
-  "mcpServers": {
-    "laravel-boost": {
-      "command": "/home/antoine/.config/herd-lite/bin/php",
-      "args": [
-        "/home/antoine/Projects/pool-school/artisan",
-        "boost:mcp"
-      ]
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "/home/antoine/.config/herd-lite/bin/php",
+            "args": ["/home/antoine/Projects/pool-school/artisan", "boost:mcp"]
+        }
     }
-  }
 }

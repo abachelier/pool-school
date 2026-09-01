@@ -55,9 +55,10 @@ export function AppSidebar() {
         });
     }
 
-    const settingsHref = auth.currentSchoolId && auth.currentSchoolRole === 'admin'
-        ? schoolsShow.url(auth.currentSchoolId)
-        : null;
+    const settingsHref =
+        auth.currentSchoolId && auth.currentSchoolRole === 'admin'
+            ? schoolsShow.url(auth.currentSchoolId)
+            : null;
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -71,7 +72,10 @@ export function AppSidebar() {
                                 isActive={isCurrentUrl(settingsHref)}
                                 tooltip={{ children: 'Settings' }}
                             >
-                                <Link href={settingsHref} onClick={() => setOpenMobile(false)}>
+                                <Link
+                                    href={settingsHref}
+                                    onClick={() => setOpenMobile(false)}
+                                >
                                     <Settings />
                                     <span>Settings</span>
                                 </Link>

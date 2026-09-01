@@ -98,9 +98,7 @@ export function SchoolSwitcher() {
                                         <GraduationCap className="size-3.5 shrink-0" />
                                     )}
                                 </div>
-                                <span className="truncate">
-                                    {school.name}
-                                </span>
+                                <span className="truncate">{school.name}</span>
                                 {school.id === auth.currentSchoolId && (
                                     <span className="text-muted-foreground ml-auto text-xs">
                                         Active
@@ -111,9 +109,7 @@ export function SchoolSwitcher() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             className="cursor-pointer gap-2 p-2"
-                            onClick={() =>
-                                router.visit(schoolsCreate.url())
-                            }
+                            onClick={() => router.visit(schoolsCreate.url())}
                         >
                             <div className="bg-background flex size-6 items-center justify-center rounded-md border">
                                 <Plus className="size-4" />

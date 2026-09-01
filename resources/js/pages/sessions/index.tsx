@@ -25,7 +25,11 @@ function formatDate(date: string): string {
     });
 }
 
-export default function SessionsIndex({ school, sessions, isShowingArchived }: PageProps) {
+export default function SessionsIndex({
+    school,
+    sessions,
+    isShowingArchived,
+}: PageProps) {
     usePoll(15000);
 
     return (
@@ -43,10 +47,14 @@ export default function SessionsIndex({ school, sessions, isShowingArchived }: P
                         <Button variant="outline" asChild>
                             <Link
                                 href={sessionsIndex.url(school.id, {
-                                    query: isShowingArchived ? {} : { archived: '1' },
+                                    query: isShowingArchived
+                                        ? {}
+                                        : { archived: '1' },
                                 })}
                             >
-                                {isShowingArchived ? 'Active Sessions' : 'Archived'}
+                                {isShowingArchived
+                                    ? 'Active Sessions'
+                                    : 'Archived'}
                             </Link>
                         </Button>
                         {!isShowingArchived && (
@@ -83,7 +91,9 @@ export default function SessionsIndex({ school, sessions, isShowingArchived }: P
                                         {formatDate(session.date)}
                                     </h3>
                                     {session.is_archived && (
-                                        <Badge variant="secondary">Archived</Badge>
+                                        <Badge variant="secondary">
+                                            Archived
+                                        </Badge>
                                     )}
                                 </div>
                                 {session.pupils &&

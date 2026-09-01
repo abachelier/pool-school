@@ -16,18 +16,18 @@ Each user–school membership has a role that determines what the user can do wi
 
 The user who creates a school is automatically assigned the **admin** role. An admin can:
 
-* Edit the school's details.
-* Manage pupils within the school.
-* Manage sessions within the school.
-* Invite other users to join the school.
+- Edit the school's details.
+- Manage pupils within the school.
+- Manage sessions within the school.
+- Invite other users to join the school.
 
 ### Member
 
 A user who is invited to a school receives the **member** role. A member can:
 
-* View the school's details.
-* Manage pupils within the school.
-* Manage sessions within the school.
+- View the school's details.
+- Manage pupils within the school.
+- Manage sessions within the school.
 
 Members cannot edit school details or invite other users.
 
@@ -49,9 +49,9 @@ If a user belongs to multiple schools, they select which school to work in. The 
 
 ## Acceptance Criteria
 
-* [ ] A user can create a school and becomes its admin.
-* [ ] A user can belong to multiple schools.
-* [ ] A school can have multiple users.
-* [ ] Each user–school membership has a role (admin or member).
-* [ ] An admin can invite other users to join the school.
-* [ ] A member can manage pupils and sessions but cannot edit school details or invite users.
+- [ ] A user can create a school and becomes its admin.
+- [ ] A user can belong to multiple schools.
+- [ ] A school can have multiple users.
+- [ ] Each user–school membership has a role (admin or member).
+- [ ] An admin can invite other users to join the school.
+- [ ] A member can manage pupils and sessions but cannot edit school details or invite users.

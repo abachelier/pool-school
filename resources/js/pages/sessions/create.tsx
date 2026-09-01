@@ -11,9 +11,7 @@ type PageProps = {
     school: School;
 };
 
-export default function SessionsCreate({
-    school,
-}: PageProps) {
+export default function SessionsCreate({ school }: PageProps) {
     const { data, setData, post, processing, errors } = useForm({
         date: new Date().toISOString().split('T')[0],
         notes: '',
@@ -34,10 +32,7 @@ export default function SessionsCreate({
                     description="Create a new training session."
                 />
 
-                <form
-                    onSubmit={submit}
-                    className="max-w-lg space-y-6"
-                >
+                <form onSubmit={submit} className="max-w-lg space-y-6">
                     <div className="grid gap-2">
                         <Label htmlFor="date">Date</Label>
                         <Input

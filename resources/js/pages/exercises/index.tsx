@@ -53,9 +53,7 @@ export default function ExercisesIndex({
                     <div className="flex items-center gap-2">
                         {isShowingArchived ? (
                             <Button variant="outline" asChild>
-                                <Link href={index.url()}>
-                                    Active Exercises
-                                </Link>
+                                <Link href={index.url()}>Active Exercises</Link>
                             </Button>
                         ) : (
                             <>
@@ -111,13 +109,17 @@ export default function ExercisesIndex({
                                                         {exercise.name}
                                                     </h4>
                                                     {!exercise.is_active && (
-                                                        <Badge variant="secondary" className="ml-1 shrink-0 text-xs">
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="ml-1 shrink-0 text-xs"
+                                                        >
                                                             Archived
                                                         </Badge>
                                                     )}
                                                 </div>
                                                 <p className="text-muted-foreground mt-1 text-xs">
-                                                    Difficulty: {exercise.difficulty}/5
+                                                    Difficulty:{' '}
+                                                    {exercise.difficulty}/5
                                                 </p>
                                             </div>
                                         </Link>

@@ -37,9 +37,7 @@ export default function ExercisesCreate({ categories }: PageProps) {
                                     required
                                     className="border-input bg-background text-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <option value="">
-                                        Select a category
-                                    </option>
+                                    <option value="">Select a category</option>
                                     {categories.map((cat) => (
                                         <option
                                             key={cat.value}
@@ -92,7 +90,9 @@ export default function ExercisesCreate({ categories }: PageProps) {
                                     min={1}
                                     placeholder="e.g. 20"
                                 />
-                                <InputError message={errors.default_max_score} />
+                                <InputError
+                                    message={errors.default_max_score}
+                                />
                             </div>
 
                             <div className="grid gap-2">

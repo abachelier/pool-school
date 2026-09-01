@@ -38,9 +38,7 @@ export default function ExercisesShow({ exercise }: PageProps) {
                         {exercise.is_active ? (
                             <>
                                 <Button variant="outline" asChild>
-                                    <Link
-                                        href={edit.url(exercise.id)}
-                                    >
+                                    <Link href={edit.url(exercise.id)}>
                                         <Pencil className="mr-1 size-4" />
                                         Edit
                                     </Link>

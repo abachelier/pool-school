@@ -1,9 +1,5 @@
 {
-    "agents": [
-        "claude_code",
-        "junie",
-        "kiro"
-    ],
+    "agents": ["claude_code", "junie", "kiro"],
     "cloud": false,
     "guidelines": true,
     "mcp": true,

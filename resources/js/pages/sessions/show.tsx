@@ -64,7 +64,9 @@ function ResultCell({
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const [score, setScore] = useState(String(assignment.score ?? ''));
-    const [maxScore, setMaxScore] = useState(String(assignment.max_score ?? ''));
+    const [maxScore, setMaxScore] = useState(
+        String(assignment.max_score ?? ''),
+    );
 
     function handleOpen() {
         if (isArchived) return;
@@ -78,7 +80,10 @@ function ResultCell({
         const newScore = score === '' ? null : Number(score);
         const newMaxScore = maxScore === '' ? null : Number(maxScore);
 
-        if (newScore !== assignment.score || newMaxScore !== assignment.max_score) {
+        if (
+            newScore !== assignment.score ||
+            newMaxScore !== assignment.max_score
+        ) {
             router.patch(
                 TrainingSessionController.updateAssignment.url({
                     school: schoolId,
@@ -104,7 +109,9 @@ function ResultCell({
                 type="button"
                 onClick={handleOpen}
                 className={`inline-flex h-7 w-full min-w-[60px] items-center justify-center rounded-md text-sm ${
-                    !isArchived ? 'hover:bg-muted cursor-pointer' : 'cursor-default'
+                    !isArchived
+                        ? 'hover:bg-muted cursor-pointer'
+                        : 'cursor-default'
                 }`}
             >
                 {displayValue || (
@@ -227,9 +234,10 @@ export default function SessionsShow({
                     actions={
                         !session.is_archived ? (
                             <Form
-                                {...TrainingSessionController.archive.form(
-                                    { school: school.id, session: session.id },
-                                )}
+                                {...TrainingSessionController.archive.form({
+                                    school: school.id,
+                                    session: session.id,
+                                })}
                                 className="inline"
                             >
                                 {({ processing }) => (
@@ -245,9 +253,10 @@ export default function SessionsShow({
                             </Form>
                         ) : (
                             <Form
-                                {...TrainingSessionController.restore.form(
-                                    { school: school.id, session: session.id },
-                                )}
+                                {...TrainingSessionController.restore.form({
+                                    school: school.id,
+                                    session: session.id,
+                                })}
                                 className="inline"
                             >
                                 {({ processing }) => (
@@ -301,9 +310,7 @@ export default function SessionsShow({
                                     className="group relative w-36 shrink-0 overflow-hidden rounded-lg border sm:w-auto sm:shrink"
                                 >
                                     <Link
-                                        href={exercisesShow.url(
-                                            exercise.id,
-                                        )}
+                                        href={exercisesShow.url(exercise.id)}
                                         className="block"
                                     >
                                         {exercise.image_path && (
@@ -319,23 +326,24 @@ export default function SessionsShow({
                                             </h4>
                                         </div>
                                     </Link>
-                                    {!exercise.has_pupil_assignment && !session.is_archived && (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="absolute top-1 right-1 size-7 opacity-0 transition-opacity group-hover:opacity-100"
-                                            onClick={() =>
-                                                handleRemoveExercise(
-                                                    exercise.id,
-                                                )
-                                            }
-                                        >
-                                            <Trash2 className="size-4" />
-                                            <span className="sr-only">
-                                                Remove exercise
-                                            </span>
-                                        </Button>
-                                    )}
+                                    {!exercise.has_pupil_assignment &&
+                                        !session.is_archived && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute top-1 right-1 size-7 opacity-0 transition-opacity group-hover:opacity-100"
+                                                onClick={() =>
+                                                    handleRemoveExercise(
+                                                        exercise.id,
+                                                    )
+                                                }
+                                            >
+                                                <Trash2 className="size-4" />
+                                                <span className="sr-only">
+                                                    Remove exercise
+                                                </span>
+                                            </Button>
+                                        )}
                                 </div>
                             ))}
                         </div>
@@ -347,23 +355,23 @@ export default function SessionsShow({
                 </div>
 
                 <div className="space-y-4">
-                    <h3 className="text-lg font-medium">
-                        Pupil Assignments
-                    </h3>
+                    <h3 className="text-lg font-medium">Pupil Assignments</h3>
 
                     {sessionExercises.length === 0 ? (
                         <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center">
                             Add exercises first to start assigning pupils.
                         </div>
-                    ) : pupilRows.length === 0 && availablePupils.length === 0 ? (
+                    ) : pupilRows.length === 0 &&
+                      availablePupils.length === 0 ? (
                         <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center">
-                            No pupils available. Add active pupils to your school first.
+                            No pupils available. Add active pupils to your
+                            school first.
                         </div>
                     ) : (
                         <div className="overflow-x-auto rounded-lg border">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="border-b bg-muted/50">
+                                    <tr className="bg-muted/50 border-b">
                                         <th className="px-3 py-2 text-left font-medium">
                                             Pupil
                                         </th>
@@ -389,30 +397,44 @@ export default function SessionsShow({
                                             <td className="px-3 py-2 font-medium whitespace-nowrap">
                                                 {row.pupil.name}
                                             </td>
-                                            {sessionExercises.map((exercise) => {
-                                                const assignment =
-                                                    row.assignments[exercise.id];
-                                                return (
-                                                    <td
-                                                        key={exercise.id}
-                                                        className="px-2 py-1 text-center"
-                                                    >
-                                                        {assignment ? (
-                                                            <ResultCell
-                                                                assignment={assignment}
-                                                                schoolId={school.id}
-                                                                sessionId={session.id}
-                                                                isArchived={session.is_archived}
-                                                                defaultMaxScore={exercise.default_max_score}
-                                                            />
-                                                        ) : (
-                                                            <span className="text-muted-foreground">
-                                                                —
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                );
-                                            })}
+                                            {sessionExercises.map(
+                                                (exercise) => {
+                                                    const assignment =
+                                                        row.assignments[
+                                                            exercise.id
+                                                        ];
+                                                    return (
+                                                        <td
+                                                            key={exercise.id}
+                                                            className="px-2 py-1 text-center"
+                                                        >
+                                                            {assignment ? (
+                                                                <ResultCell
+                                                                    assignment={
+                                                                        assignment
+                                                                    }
+                                                                    schoolId={
+                                                                        school.id
+                                                                    }
+                                                                    sessionId={
+                                                                        session.id
+                                                                    }
+                                                                    isArchived={
+                                                                        session.is_archived
+                                                                    }
+                                                                    defaultMaxScore={
+                                                                        exercise.default_max_score
+                                                                    }
+                                                                />
+                                                            ) : (
+                                                                <span className="text-muted-foreground">
+                                                                    —
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                },
+                                            )}
                                             {!session.is_archived && (
                                                 <td className="px-2 py-1">
                                                     <Button
@@ -434,54 +456,77 @@ export default function SessionsShow({
                                             )}
                                         </tr>
                                     ))}
-                                    {!session.is_archived && availablePupils.length > 0 && (
-                                        <tr>
-                                            <td
-                                                colSpan={
-                                                    sessionExercises.length + 2
-                                                }
-                                                className="px-3 py-2"
-                                            >
-                                                <form
-                                                    onSubmit={handleAddPupil}
-                                                    className="flex items-center gap-2"
+                                    {!session.is_archived &&
+                                        availablePupils.length > 0 && (
+                                            <tr>
+                                                <td
+                                                    colSpan={
+                                                        sessionExercises.length +
+                                                        2
+                                                    }
+                                                    className="px-3 py-2"
                                                 >
-                                                    <Select
-                                                        value={addPupilForm.data.pupil_id}
-                                                        onValueChange={(val) =>
-                                                            addPupilForm.setData('pupil_id', val)
+                                                    <form
+                                                        onSubmit={
+                                                            handleAddPupil
                                                         }
+                                                        className="flex items-center gap-2"
                                                     >
-                                                        <SelectTrigger size="sm">
-                                                            <SelectValue placeholder="Select a pupil..." />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {availablePupils.map((pupil) => (
-                                                                <SelectItem
-                                                                    key={pupil.id}
-                                                                    value={String(pupil.id)}
-                                                                >
-                                                                    {pupil.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <Button
-                                                        type="submit"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        disabled={
-                                                            !addPupilForm.data.pupil_id ||
-                                                            addPupilForm.processing
-                                                        }
-                                                    >
-                                                        <Plus className="mr-1 size-4" />
-                                                        Add
-                                                    </Button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    )}
+                                                        <Select
+                                                            value={
+                                                                addPupilForm
+                                                                    .data
+                                                                    .pupil_id
+                                                            }
+                                                            onValueChange={(
+                                                                val,
+                                                            ) =>
+                                                                addPupilForm.setData(
+                                                                    'pupil_id',
+                                                                    val,
+                                                                )
+                                                            }
+                                                        >
+                                                            <SelectTrigger size="sm">
+                                                                <SelectValue placeholder="Select a pupil..." />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {availablePupils.map(
+                                                                    (pupil) => (
+                                                                        <SelectItem
+                                                                            key={
+                                                                                pupil.id
+                                                                            }
+                                                                            value={String(
+                                                                                pupil.id,
+                                                                            )}
+                                                                        >
+                                                                            {
+                                                                                pupil.name
+                                                                            }
+                                                                        </SelectItem>
+                                                                    ),
+                                                                )}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <Button
+                                                            type="submit"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            disabled={
+                                                                !addPupilForm
+                                                                    .data
+                                                                    .pupil_id ||
+                                                                addPupilForm.processing
+                                                            }
+                                                        >
+                                                            <Plus className="mr-1 size-4" />
+                                                            Add
+                                                        </Button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        )}
                                 </tbody>
                             </table>
                         </div>

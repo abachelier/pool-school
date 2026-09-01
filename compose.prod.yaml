@@ -47,7 +47,16 @@ services:
         networks:
             - pool-school
         healthcheck:
-            test: ['CMD', 'pg_isready', '-q', '-d', '${DB_DATABASE:-pool_school}', '-U', '${DB_USERNAME:-pool_school}']
+            test:
+                [
+                    'CMD',
+                    'pg_isready',
+                    '-q',
+                    '-d',
+                    '${DB_DATABASE:-pool_school}',
+                    '-U',
+                    '${DB_USERNAME:-pool_school}',
+                ]
             interval: 10s
             retries: 5
             timeout: 5s

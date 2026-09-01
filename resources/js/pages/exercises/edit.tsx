@@ -42,9 +42,7 @@ export default function ExercisesEdit({ exercise, categories }: PageProps) {
                                     defaultValue={exercise.category}
                                     className="border-input bg-background text-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <option value="">
-                                        Select a category
-                                    </option>
+                                    <option value="">Select a category</option>
                                     {categories.map((cat) => (
                                         <option
                                             key={cat.value}
@@ -107,10 +105,14 @@ export default function ExercisesEdit({ exercise, categories }: PageProps) {
                                     name="default_max_score"
                                     type="number"
                                     min={1}
-                                    defaultValue={exercise.default_max_score ?? ''}
+                                    defaultValue={
+                                        exercise.default_max_score ?? ''
+                                    }
                                     placeholder="e.g. 20"
                                 />
-                                <InputError message={errors.default_max_score} />
+                                <InputError
+                                    message={errors.default_max_score}
+                                />
                             </div>
 
                             <div className="grid gap-2">

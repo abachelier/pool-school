@@ -14,15 +14,15 @@ A teacher creates a school and manages everything within it. In the first versio
 
 A teacher can:
 
-* Create a school.
-* View and edit the school's details.
-* Manage pupils within the school.
-* Manage sessions within the school.
+- Create a school.
+- View and edit the school's details.
+- Manage pupils within the school.
+- Manage sessions within the school.
 
 A school should have:
 
-* Name
-* Optional description
+- Name
+- Optional description
 
 ## Ownership & Scope
 
@@ -54,28 +54,28 @@ Any teacher can browse and use any exercise when assigning work to pupils during
 
 Pupils and sessions should be nested under the school in the URL structure:
 
-* `/schools/{school}/pupils`
-* `/schools/{school}/pupils/{pupil}`
-* `/schools/{school}/sessions`
-* `/schools/{school}/sessions/{session}`
+- `/schools/{school}/pupils`
+- `/schools/{school}/pupils/{pupil}`
+- `/schools/{school}/sessions`
+- `/schools/{school}/sessions/{session}`
 
 Exercises remain at the top level:
 
-* `/exercises`
-* `/exercises/{exercise}`
+- `/exercises`
+- `/exercises/{exercise}`
 
 ## Future Direction
 
 Later versions may support:
 
-* School-level settings and customisation.
-* Role-based permissions beyond admin/member.
+- School-level settings and customisation.
+- Role-based permissions beyond admin/member.
 
 ## Acceptance Criteria
 
-* [ ] Teacher can create a school.
-* [ ] Teacher can view and edit school details.
-* [ ] Pupils belong to a school.
-* [ ] Sessions belong to a school.
-* [ ] Exercises remain global and are not scoped to a school.
-* [ ] Pupil and session routes are nested under the school.
+- [ ] Teacher can create a school.
+- [ ] Teacher can view and edit school details.
+- [ ] Pupils belong to a school.
+- [ ] Sessions belong to a school.
+- [ ] Exercises remain global and are not scoped to a school.
+- [ ] Pupil and session routes are nested under the school.

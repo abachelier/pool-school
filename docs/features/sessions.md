@@ -14,9 +14,9 @@ A session represents one specific training occasion.
 
 A session has:
 
-* Date
-* One or more pupils
-* Exercise assignments
+- Date
+- One or more pupils
+- Exercise assignments
 
 The application does not need recurring session scheduling in the first version.
 
@@ -35,22 +35,23 @@ For example:
 
 Session: Monday, March 9
 
-* Alice
+- Alice
 
-    * Exercise A
-    * Exercise B
-* Bob
+    - Exercise A
+    - Exercise B
 
-    * Exercise A
-    * Exercise C
+- Bob
+
+    - Exercise A
+    - Exercise C
 
 ## Exercise Assignment
 
 An exercise assignment connects:
 
-* A session
-* A pupil
-* An exercise
+- A session
+- A pupil
+- An exercise
 
 The assignment should allow the teacher to record the result achieved by the pupil.
 
@@ -62,9 +63,9 @@ The exact result format should remain flexible in the first version because diff
 
 An exercise result may contain:
 
-* Result/value
-* Optional notes
-* Completion status
+- Result/value
+- Optional notes
+- Completion status
 
 The application should not assume that every exercise uses the same scoring system.
 
@@ -82,9 +83,9 @@ The data model should therefore allow different types of results to be introduce
 
 A session can be:
 
-* Planned
-* In progress
-* Completed
+- Planned
+- In progress
+- Completed
 
 The teacher should be able to complete a session after results have been recorded.
 
@@ -94,11 +95,11 @@ A teacher can view previous sessions.
 
 A session detail page should show:
 
-* Date
-* Participating pupils
-* Exercises assigned to each pupil
-* Recorded results
-* Teacher notes
+- Date
+- Participating pupils
+- Exercises assigned to each pupil
+- Recorded results
+- Teacher notes
 
 ## Pupil History
 
@@ -108,14 +109,14 @@ This provides the foundation for future progress tracking.
 
 ## Acceptance Criteria
 
-* [ ] Teacher can create a session.
-* [ ] Teacher can select the session date.
-* [ ] Teacher can select multiple pupils.
-* [ ] Teacher can assign exercises to pupils.
-* [ ] Different pupils can have different exercises.
-* [ ] Teacher can record a result for an assigned exercise.
-* [ ] Teacher can add notes to a result.
-* [ ] Teacher can mark a session as completed.
-* [ ] Teacher can view previous sessions.
-* [ ] Teacher can view a pupil's session history.
-* [ ] Historical results remain available even if a pupil or exercise is archived.
+- [ ] Teacher can create a session.
+- [ ] Teacher can select the session date.
+- [ ] Teacher can select multiple pupils.
+- [ ] Teacher can assign exercises to pupils.
+- [ ] Different pupils can have different exercises.
+- [ ] Teacher can record a result for an assigned exercise.
+- [ ] Teacher can add notes to a result.
+- [ ] Teacher can mark a session as completed.
+- [ ] Teacher can view previous sessions.
+- [ ] Teacher can view a pupil's session history.
+- [ ] Historical results remain available even if a pupil or exercise is archived.

@@ -8,21 +8,21 @@ Allow teachers to create and maintain a reusable library of 8-ball pool training
 
 A teacher can:
 
-* View all exercises.
-* Create an exercise.
-* View an exercise.
-* Edit an exercise.
-* Archive an exercise.
+- View all exercises.
+- Create an exercise.
+- View an exercise.
+- Edit an exercise.
+- Archive an exercise.
 
 An exercise should have:
 
-* Name
-* Category
-* Description/instructions
-* Image
-* Optional difficulty
-* Optional notes
-* Active/archived status
+- Name
+- Category
+- Description/instructions
+- Image
+- Optional difficulty
+- Optional notes
+- Active/archived status
 
 ## Exercise Categories
 
@@ -33,13 +33,13 @@ The teacher should be able to categorize exercises in a way that makes sense for
 
 Possible examples:
 
-* Basic potting
-* Potting down the rail
-* Back spin
-* Top spin
-* Stop shot
-* Break
-* Pattern play
+- Basic potting
+- Potting down the rail
+- Back spin
+- Top spin
+- Stop shot
+- Break
+- Pattern play
 
 ## Reusability
 
@@ -57,10 +57,10 @@ Previously completed exercises and their results must remain visible in historic
 
 ## Acceptance Criteria
 
-* [ ] Teacher can create an exercise.
-* [ ] Teacher can edit an exercise.
-* [ ] Teacher can view an exercise.
-* [ ] Teacher can archive an exercise.
-* [ ] Active exercises are available when creating a session.
-* [ ] Archived exercises are excluded from new assignments.
-* [ ] Historical assignments remain accessible.
+- [ ] Teacher can create an exercise.
+- [ ] Teacher can edit an exercise.
+- [ ] Teacher can view an exercise.
+- [ ] Teacher can archive an exercise.
+- [ ] Active exercises are available when creating a session.
+- [ ] Archived exercises are excluded from new assignments.
+- [ ] Historical assignments remain accessible.
