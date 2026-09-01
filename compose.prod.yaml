@@ -1,9 +1,6 @@
 services:
     app:
-        build:
-            context: .
-            dockerfile: Dockerfile
-        image: pool-school:latest
+        image: ${APP_IMAGE:-pool-school:latest}
         restart: unless-stopped
         ports:
             - '${APP_PORT:-80}:80'
