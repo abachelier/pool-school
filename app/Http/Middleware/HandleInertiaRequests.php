@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SchoolInvitation;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -61,6 +62,20 @@ class HandleInertiaRequests extends Middleware
             }
         }
 
+        $pendingInvitations = [];
+
+        if ($user) {
+            $pendingInvitations = SchoolInvitation::where('email', $user->email)
+                ->with('school:id,name')
+                ->get()
+                ->map(fn (SchoolInvitation $invitation) => [
+                    'id' => $invitation->id,
+                    'school_name' => $invitation->school->name,
+                    'role' => $invitation->role,
+                ])
+                ->all();
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -69,6 +84,7 @@ class HandleInertiaRequests extends Middleware
                 'schools' => $schools,
                 'currentSchoolId' => $currentSchoolId,
                 'currentSchoolRole' => $currentSchoolRole,
+                'pendingInvitations' => $pendingInvitations,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

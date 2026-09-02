@@ -30,7 +30,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
-            'last_connected_at' => now(),
+            'last_login_at' => now(),
         ];
     }
 
@@ -50,7 +50,7 @@ class UserFactory extends Factory
     public function neverConnected(): static
     {
         return $this->state(fn (array $attributes) => [
-            'last_connected_at' => null,
+            'last_login_at' => null,
         ]);
     }
 

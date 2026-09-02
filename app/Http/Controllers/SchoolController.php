@@ -6,11 +6,11 @@ use App\Enums\SchoolRole;
 use App\Http\Requests\Schools\StoreSchoolRequest;
 use App\Http\Requests\Schools\UpdateSchoolRequest;
 use App\Models\School;
+use App\Models\SchoolInvitation;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -100,6 +100,16 @@ class SchoolController extends Controller
                     'role' => $user->pivot->role,
                     'is_self' => $user->id === $request->user()->id,
                 ]),
+            'pendingInvitations' => SchoolInvitation::where('school_id', $school->id)
+                ->with('inviter:id,name')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(fn (SchoolInvitation $invitation) => [
+                    'id' => $invitation->id,
+                    'email' => $invitation->email,
+                    'role' => $invitation->role,
+                    'invited_by_name' => $invitation->inviter->name,
+                ]),
         ]);
     }
 
@@ -126,35 +136,35 @@ class SchoolController extends Controller
     }
 
     /**
-     * Add a new member to the school, creating the user account if needed.
+     * Invite a user to the school by email.
      */
-    public function addMember(Request $request, School $school): RedirectResponse
+    public function inviteMember(Request $request, School $school): RedirectResponse
     {
         abort_unless($school->hasAdmin($request->user()), 403);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'role' => ['required', 'string', 'in:admin,member'],
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        $existingUser = User::where('email', $validated['email'])->first();
 
-        if ($user && $school->hasMember($user)) {
+        if ($existingUser && $school->hasMember($existingUser)) {
             return back()->withErrors(['email' => __('This user is already a member of this school.')]);
         }
 
-        if (! $user) {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Str::random(32),
-            ]);
+        if (SchoolInvitation::where('school_id', $school->id)->where('email', $validated['email'])->exists()) {
+            return back()->withErrors(['email' => __('An invitation has already been sent to this email.')]);
         }
 
-        $school->users()->attach($user, ['role' => SchoolRole::from($validated['role'])]);
+        SchoolInvitation::create([
+            'school_id' => $school->id,
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+            'invited_by' => $request->user()->id,
+        ]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Member added.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation sent.')]);
 
         return back();
     }

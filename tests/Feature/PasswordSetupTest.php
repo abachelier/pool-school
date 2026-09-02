@@ -1,89 +1,142 @@
 <?php
 
+use App\Enums\SchoolRole;
 use App\Models\School;
+use App\Models\SchoolInvitation;
 use App\Models\User;
 
-test('first-login user is redirected to password setup', function () {
-    $user = User::factory()->neverConnected()->create();
-    School::factory()->forUser($user)->create();
+test('user can accept an invitation and join the school', function () {
+    $admin = User::factory()->create();
+    $school = School::factory()->forUser($admin)->create();
+    $invitee = User::factory()->create(['email' => 'invitee@example.com']);
+    School::factory()->forUser($invitee)->create();
+
+    $invitation = SchoolInvitation::factory()->create([
+        'school_id' => $school->id,
+        'email' => 'invitee@example.com',
+        'role' => 'member',
+        'invited_by' => $admin->id,
+    ]);
 
     $response = $this
-        ->actingAs($user)
-        ->get(route('dashboard'));
+        ->actingAs($invitee)
+        ->post(route('invitations.accept', $invitation));
 
-    $response->assertRedirect(route('password.setup'));
+    $response->assertRedirect(route('dashboard'));
+
+    expect($school->hasMember($invitee))->toBeTrue();
+    expect(SchoolInvitation::find($invitation->id))->toBeNull();
 });
 
-test('first-login user can view password setup page', function () {
-    $user = User::factory()->neverConnected()->create();
+test('user can decline an invitation', function () {
+    $admin = User::factory()->create();
+    $school = School::factory()->forUser($admin)->create();
+    $invitee = User::factory()->create(['email' => 'invitee@example.com']);
+    School::factory()->forUser($invitee)->create();
+
+    $invitation = SchoolInvitation::factory()->create([
+        'school_id' => $school->id,
+        'email' => 'invitee@example.com',
+        'role' => 'member',
+        'invited_by' => $admin->id,
+    ]);
 
     $response = $this
-        ->actingAs($user)
-        ->get(route('password.setup'));
+        ->actingAs($invitee)
+        ->post(route('invitations.decline', $invitation));
+
+    $response->assertRedirect();
+
+    expect($school->hasMember($invitee))->toBeFalse();
+    expect(SchoolInvitation::find($invitation->id))->toBeNull();
+});
+
+test('user cannot accept another users invitation', function () {
+    $admin = User::factory()->create();
+    $school = School::factory()->forUser($admin)->create();
+    $invitee = User::factory()->create(['email' => 'invitee@example.com']);
+    School::factory()->forUser($invitee)->create();
+    $otherUser = User::factory()->create(['email' => 'other@example.com']);
+    School::factory()->forUser($otherUser)->create();
+
+    $invitation = SchoolInvitation::factory()->create([
+        'school_id' => $school->id,
+        'email' => 'invitee@example.com',
+        'role' => 'member',
+        'invited_by' => $admin->id,
+    ]);
+
+    $response = $this
+        ->actingAs($otherUser)
+        ->post(route('invitations.accept', $invitation));
+
+    $response->assertForbidden();
+
+    expect(SchoolInvitation::find($invitation->id))->not->toBeNull();
+});
+
+test('accepting invitation sets the correct role', function () {
+    $admin = User::factory()->create();
+    $school = School::factory()->forUser($admin)->create();
+    $invitee = User::factory()->create(['email' => 'invitee@example.com']);
+    School::factory()->forUser($invitee)->create();
+
+    $invitation = SchoolInvitation::factory()->create([
+        'school_id' => $school->id,
+        'email' => 'invitee@example.com',
+        'role' => 'admin',
+        'invited_by' => $admin->id,
+    ]);
+
+    $this
+        ->actingAs($invitee)
+        ->post(route('invitations.accept', $invitation));
+
+    expect($school->users()->where('users.id', $invitee->id)->first()->pivot->role)
+        ->toBe(SchoolRole::Admin->value);
+});
+
+test('pending invitations are shared with authenticated user', function () {
+    $admin = User::factory()->create();
+    $school = School::factory()->forUser($admin)->create();
+    $invitee = User::factory()->create(['email' => 'invitee@example.com']);
+    School::factory()->forUser($invitee)->create();
+
+    SchoolInvitation::factory()->create([
+        'school_id' => $school->id,
+        'email' => 'invitee@example.com',
+        'role' => 'member',
+        'invited_by' => $admin->id,
+    ]);
+
+    $response = $this
+        ->actingAs($invitee)
+        ->get(route('dashboard'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('auth/setup-password')
-        ->has('passwordRules')
+        ->where('auth.pendingInvitations.0.school_name', $school->name)
     );
 });
 
-test('first-login user can set their password', function () {
-    $user = User::factory()->neverConnected()->create();
+test('user without school sees invitations on onboarding page', function () {
+    $admin = User::factory()->create();
+    $school = School::factory()->forUser($admin)->create();
+    $invitee = User::factory()->create(['email' => 'invitee@example.com']);
+
+    SchoolInvitation::factory()->create([
+        'school_id' => $school->id,
+        'email' => 'invitee@example.com',
+        'role' => 'member',
+        'invited_by' => $admin->id,
+    ]);
 
     $response = $this
-        ->actingAs($user)
-        ->post(route('password.setup.update'), [
-            'password' => 'new-password-123',
-            'password_confirmation' => 'new-password-123',
-        ]);
-
-    $response->assertRedirect(route('dashboard'));
-
-    $user->refresh();
-    expect($user->last_connected_at)->not->toBeNull();
-});
-
-test('password setup requires confirmation', function () {
-    $user = User::factory()->neverConnected()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->post(route('password.setup.update'), [
-            'password' => 'new-password-123',
-            'password_confirmation' => 'different-password',
-        ]);
-
-    $response->assertSessionHasErrors('password');
-});
-
-test('connected user is redirected away from password setup', function () {
-    $user = User::factory()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->get(route('password.setup'));
-
-    $response->assertRedirect(route('dashboard'));
-});
-
-test('connected user is not redirected to password setup', function () {
-    $user = User::factory()->create();
-    School::factory()->forUser($user)->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->get(route('dashboard'));
+        ->actingAs($invitee)
+        ->get(route('schools.onboarding'));
 
     $response->assertOk();
-});
-
-test('first-login user can still logout', function () {
-    $user = User::factory()->neverConnected()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->post(route('logout'));
-
-    $this->assertGuest();
+    $response->assertInertia(fn ($page) => $page
+        ->where('auth.pendingInvitations.0.school_name', $school->name)
+    );
 });

@@ -15,9 +15,16 @@ export type SchoolSummary = {
     logo_path: string | null;
 };
 
+export type PendingInvitation = {
+    id: number;
+    school_name: string;
+    role: string;
+};
+
 export type Auth = {
     user: User;
     schools: SchoolSummary[];
     currentSchoolId: number | null;
     currentSchoolRole: 'admin' | 'member' | null;
+    pendingInvitations: PendingInvitation[];
 };

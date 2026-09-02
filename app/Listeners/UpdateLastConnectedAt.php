@@ -12,7 +12,7 @@ class UpdateLastConnectedAt
     public function handle(Login $event): void
     {
         $event->user->update([
-            'last_connected_at' => now(),
+            'last_login_at' => now(),
         ]);
     }
 }

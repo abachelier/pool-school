@@ -15,12 +15,6 @@ class EnsurePasswordIsSet
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
-
-        if ($user && $user->last_connected_at === null && ! $request->routeIs('password.setup', 'password.setup.update', 'logout')) {
-            return redirect()->route('password.setup');
-        }
-
         return $next($request);
     }
 }

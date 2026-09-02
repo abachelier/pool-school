@@ -2,6 +2,7 @@
 
 use App\Enums\SchoolRole;
 use App\Models\School;
+use App\Models\SchoolInvitation;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -391,48 +392,24 @@ test('non-member cannot toggle roles', function () {
     $response->assertForbidden();
 });
 
-test('admin can add a new member by creating a user', function () {
+test('admin can invite a user to the school', function () {
     $admin = User::factory()->create();
     $school = School::factory()->forUser($admin)->create();
 
     $response = $this
         ->actingAs($admin)
-        ->post(route('schools.members.store', $school), [
-            'name' => 'New Member',
+        ->post(route('schools.members.invite', $school), [
             'email' => 'newmember@example.com',
             'role' => 'member',
         ]);
 
     $response->assertRedirect();
 
-    $user = User::where('email', 'newmember@example.com')->first();
-    expect($user)->not->toBeNull();
-    expect($user->name)->toBe('New Member');
-    expect($user->last_connected_at)->toBeNull();
-    expect($school->hasMember($user))->toBeTrue();
+    expect(SchoolInvitation::where('email', 'newmember@example.com')->where('school_id', $school->id)->exists())
+        ->toBeTrue();
 });
 
-test('admin can add an existing user as a member', function () {
-    $admin = User::factory()->create();
-    $school = School::factory()->forUser($admin)->create();
-    $existingUser = User::factory()->create(['email' => 'existing@example.com']);
-    School::factory()->forUser($existingUser)->create();
-
-    $response = $this
-        ->actingAs($admin)
-        ->post(route('schools.members.store', $school), [
-            'name' => 'Ignored Name',
-            'email' => 'existing@example.com',
-            'role' => 'admin',
-        ]);
-
-    $response->assertRedirect();
-
-    expect($school->users()->where('users.id', $existingUser->id)->first()->pivot->role)
-        ->toBe(SchoolRole::Admin->value);
-});
-
-test('adding an already attached member returns validation error', function () {
+test('inviting an already attached member returns validation error', function () {
     $admin = User::factory()->create();
     $school = School::factory()->forUser($admin)->create();
     $member = User::factory()->create();
@@ -440,8 +417,7 @@ test('adding an already attached member returns validation error', function () {
 
     $response = $this
         ->actingAs($admin)
-        ->post(route('schools.members.store', $school), [
-            'name' => $member->name,
+        ->post(route('schools.members.invite', $school), [
             'email' => $member->email,
             'role' => 'member',
         ]);
@@ -449,7 +425,27 @@ test('adding an already attached member returns validation error', function () {
     $response->assertSessionHasErrors('email');
 });
 
-test('member cannot add members', function () {
+test('duplicate invitation returns validation error', function () {
+    $admin = User::factory()->create();
+    $school = School::factory()->forUser($admin)->create();
+
+    SchoolInvitation::factory()->create([
+        'school_id' => $school->id,
+        'email' => 'already@example.com',
+        'invited_by' => $admin->id,
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->post(route('schools.members.invite', $school), [
+            'email' => 'already@example.com',
+            'role' => 'member',
+        ]);
+
+    $response->assertSessionHasErrors('email');
+});
+
+test('member cannot invite members', function () {
     $admin = User::factory()->create();
     $school = School::factory()->forUser($admin)->create();
     $member = User::factory()->create();
@@ -457,8 +453,7 @@ test('member cannot add members', function () {
 
     $response = $this
         ->actingAs($member)
-        ->post(route('schools.members.store', $school), [
-            'name' => 'Someone',
+        ->post(route('schools.members.invite', $school), [
             'email' => 'someone@example.com',
             'role' => 'member',
         ]);
@@ -466,17 +461,37 @@ test('member cannot add members', function () {
     $response->assertForbidden();
 });
 
-test('add member validates required fields', function () {
+test('invite member validates required fields', function () {
     $admin = User::factory()->create();
     $school = School::factory()->forUser($admin)->create();
 
     $response = $this
         ->actingAs($admin)
-        ->post(route('schools.members.store', $school), [
-            'name' => '',
+        ->post(route('schools.members.invite', $school), [
             'email' => '',
             'role' => '',
         ]);
 
-    $response->assertSessionHasErrors(['name', 'email', 'role']);
+    $response->assertSessionHasErrors(['email', 'role']);
+});
+
+test('members page shows pending invitations', function () {
+    $admin = User::factory()->create();
+    $school = School::factory()->forUser($admin)->create();
+
+    SchoolInvitation::factory()->create([
+        'school_id' => $school->id,
+        'email' => 'pending@example.com',
+        'role' => 'member',
+        'invited_by' => $admin->id,
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->get(route('schools.members', $school));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('pendingInvitations.0.email', 'pending@example.com')
+    );
 });
