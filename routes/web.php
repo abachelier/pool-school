@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\PasswordSetupController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\PupilController;
 use App\Http\Controllers\SchoolController;
@@ -13,6 +14,11 @@ Route::get('/', function () {
         : redirect()->route('login');
 })->name('home');
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('setup-password', [PasswordSetupController::class, 'create'])->name('password.setup');
+    Route::post('setup-password', [PasswordSetupController::class, 'store'])->name('password.setup.update');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('schools/onboarding', [SchoolController::class, 'onboarding'])->name('schools.onboarding');
     Route::post('schools', [SchoolController::class, 'store'])->name('schools.store');
@@ -22,6 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('schools/create', [SchoolController::class, 'create'])->name('schools.create');
         Route::get('schools/{school}', [SchoolController::class, 'show'])->name('schools.show');
+        Route::get('schools/{school}/members', [SchoolController::class, 'members'])->name('schools.members');
+        Route::post('schools/{school}/members', [SchoolController::class, 'addMember'])->name('schools.members.store');
+        Route::patch('schools/{school}/members/{user}/toggle-role', [SchoolController::class, 'toggleRole'])->name('schools.members.toggle-role');
         Route::put('schools/{school}', [SchoolController::class, 'update'])->name('schools.update');
         Route::post('schools/{school}/switch', [SchoolController::class, 'switch'])->name('schools.switch');
 

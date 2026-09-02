@@ -30,6 +30,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'last_connected_at' => now(),
         ];
     }
 
@@ -40,6 +41,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user has never connected (first login pending).
+     */
+    public function neverConnected(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'last_connected_at' => null,
         ]);
     }
 

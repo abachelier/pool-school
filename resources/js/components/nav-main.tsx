@@ -14,7 +14,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
     const { setOpenMobile } = useSidebar();
 
     return (
-        <SidebarGroup className="px-2 py-0">
+        <SidebarGroup className="px-2 py-0 pt-2">
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>

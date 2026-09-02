@@ -1,5 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, Dumbbell, LayoutGrid, Settings, Users } from 'lucide-react';
+import {
+    Calendar,
+    Dumbbell,
+    LayoutGrid,
+    Settings,
+    Users,
+    UsersRound,
+} from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { SchoolSwitcher } from '@/components/school-switcher';
@@ -18,6 +25,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { dashboard } from '@/routes';
 import { index as exercisesIndex } from '@/routes/exercises';
 import { show as schoolsShow } from '@/routes/schools';
+import SchoolController from '@/actions/App/Http/Controllers/SchoolController';
 import { index as pupilsIndex } from '@/routes/schools/pupils';
 import { index as sessionsIndex } from '@/routes/schools/sessions';
 import type { NavItem } from '@/types';
@@ -78,6 +86,31 @@ export function AppSidebar() {
                                 >
                                     <Settings />
                                     <span>Settings</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                )}
+                {auth.currentSchoolId && auth.currentSchoolRole === 'admin' && (
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isCurrentUrl(
+                                    SchoolController.members.url(
+                                        auth.currentSchoolId,
+                                    ),
+                                )}
+                                tooltip={{ children: 'Members' }}
+                            >
+                                <Link
+                                    href={SchoolController.members.url(
+                                        auth.currentSchoolId,
+                                    )}
+                                    onClick={() => setOpenMobile(false)}
+                                >
+                                    <UsersRound />
+                                    <span>Members</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

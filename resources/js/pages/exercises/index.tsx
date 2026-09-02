@@ -1,4 +1,4 @@
-import { Head, Link, usePoll } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useMemo } from 'react';
 import { Plus } from 'lucide-react';
 import Heading from '@/components/heading';
@@ -17,8 +17,6 @@ export default function ExercisesIndex({
     exercises,
     isShowingArchived,
 }: PageProps) {
-    usePoll(15000);
-
     const groupedExercises = useMemo(() => {
         const groups: { category: string; exercises: Exercise[] }[] = [];
         let currentCategory: string | null = null;

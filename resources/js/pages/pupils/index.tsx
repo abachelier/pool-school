@@ -1,4 +1,4 @@
-import { Head, Link, usePoll } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
@@ -21,8 +21,6 @@ export default function PupilsIndex({
     pupils,
     isShowingArchived,
 }: PageProps) {
-    usePoll(15000);
-
     return (
         <>
             <Head title="Pupils" />
