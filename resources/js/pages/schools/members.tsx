@@ -44,7 +44,10 @@ export default function SchoolMembers({
 }: PageProps) {
     function handleToggleRole(memberId: number) {
         router.patch(
-            SchoolController.toggleRole.url(school.id, memberId),
+            SchoolController.toggleRole.url({
+                school: school.id,
+                user: memberId,
+            }),
             {},
             { preserveScroll: true },
         );
