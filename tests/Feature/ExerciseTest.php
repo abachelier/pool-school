@@ -1,7 +1,7 @@
 <?php
 
-use App\Enums\ExerciseCategory;
 use App\Models\Exercise;
+use App\Models\ExerciseCategory;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -21,8 +21,10 @@ test('exercises index page is displayed', function () {
 test('active exercises are shown by default', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
-    $active = Exercise::factory()->create(['category' => ExerciseCategory::BackSpin, 'difficulty' => 2]);
-    Exercise::factory()->archived()->create(['category' => ExerciseCategory::TopSpin, 'difficulty' => 3]);
+    $backSpin = ExerciseCategory::factory()->create(['name' => 'Back Spin', 'slug' => 'back-spin']);
+    $topSpin = ExerciseCategory::factory()->create(['name' => 'Top Spin', 'slug' => 'top-spin']);
+    $active = Exercise::factory()->create(['exercise_category_id' => $backSpin->id, 'difficulty' => 2]);
+    Exercise::factory()->archived()->create(['exercise_category_id' => $topSpin->id, 'difficulty' => 3]);
 
     $response = $this
         ->actingAs($user)
@@ -40,8 +42,10 @@ test('active exercises are shown by default', function () {
 test('archived exercises are shown when filtered', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
-    Exercise::factory()->create(['category' => ExerciseCategory::BackSpin, 'difficulty' => 2]);
-    Exercise::factory()->archived()->create(['category' => ExerciseCategory::TopSpin, 'difficulty' => 3]);
+    $backSpin = ExerciseCategory::factory()->create(['name' => 'Back Spin', 'slug' => 'back-spin']);
+    $topSpin = ExerciseCategory::factory()->create(['name' => 'Top Spin', 'slug' => 'top-spin']);
+    Exercise::factory()->create(['exercise_category_id' => $backSpin->id, 'difficulty' => 2]);
+    Exercise::factory()->archived()->create(['exercise_category_id' => $topSpin->id, 'difficulty' => 3]);
 
     $response = $this
         ->actingAs($user)
@@ -60,10 +64,13 @@ test('exercises are ordered by category then difficulty then id', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
 
-    $topSpin3 = Exercise::factory()->create(['category' => ExerciseCategory::TopSpin, 'difficulty' => 3]);
-    $basicPotting1 = Exercise::factory()->create(['category' => ExerciseCategory::BasicPotting, 'difficulty' => 1]);
-    $basicPotting3 = Exercise::factory()->create(['category' => ExerciseCategory::BasicPotting, 'difficulty' => 3]);
-    $topSpin1 = Exercise::factory()->create(['category' => ExerciseCategory::TopSpin, 'difficulty' => 1]);
+    $topSpin = ExerciseCategory::factory()->create(['name' => 'Top Spin']);
+    $basicPotting = ExerciseCategory::factory()->create(['name' => 'Basic Potting']);
+
+    $topSpin3 = Exercise::factory()->create(['exercise_category_id' => $topSpin->id, 'difficulty' => 3]);
+    $basicPotting1 = Exercise::factory()->create(['exercise_category_id' => $basicPotting->id, 'difficulty' => 1]);
+    $basicPotting3 = Exercise::factory()->create(['exercise_category_id' => $basicPotting->id, 'difficulty' => 3]);
+    $topSpin1 = Exercise::factory()->create(['exercise_category_id' => $topSpin->id, 'difficulty' => 1]);
 
     $response = $this
         ->actingAs($user)
@@ -83,6 +90,7 @@ test('exercises are ordered by category then difficulty then id', function () {
 test('categories are provided to index page', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
+    ExerciseCategory::factory()->count(3)->create();
 
     $response = $this
         ->actingAs($user)
@@ -90,13 +98,14 @@ test('categories are provided to index page', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->has('categories', count(ExerciseCategory::cases()))
+        ->has('categories', 3)
     );
 });
 
 test('create exercise page is displayed', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
+    ExerciseCategory::factory()->count(3)->create();
 
     $response = $this
         ->actingAs($user)
@@ -105,7 +114,7 @@ test('create exercise page is displayed', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('exercises/create')
-        ->has('categories', count(ExerciseCategory::cases()))
+        ->has('categories', 3)
     );
 });
 
@@ -113,11 +122,12 @@ test('teacher can create an exercise', function () {
     Storage::fake('public');
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
+    $category = ExerciseCategory::factory()->create(['name' => 'Stop Shot', 'slug' => 'stop-shot']);
 
     $response = $this
         ->actingAs($user)
         ->post(route('exercises.store'), [
-            'category' => 'stop_shot',
+            'exercise_category_id' => $category->id,
             'image' => UploadedFile::fake()->image('exercise.jpg'),
             'description' => 'Practice stop shots from various positions.',
             'difficulty' => 3,
@@ -128,7 +138,7 @@ test('teacher can create an exercise', function () {
     $exercise = Exercise::first();
     expect($exercise)->not->toBeNull();
     expect($exercise->name)->toBe('stop-shot-3-1');
-    expect($exercise->category)->toBe(ExerciseCategory::StopShot);
+    expect($exercise->exercise_category_id)->toBe($category->id);
     expect($exercise->description)->toBe('Practice stop shots from various positions.');
     expect($exercise->difficulty)->toBe(3);
     expect($exercise->default_max_score)->toBeNull();
@@ -142,11 +152,12 @@ test('teacher can create an exercise with a default max score', function () {
     Storage::fake('public');
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
+    $category = ExerciseCategory::factory()->create();
 
     $response = $this
         ->actingAs($user)
         ->post(route('exercises.store'), [
-            'category' => 'stop_shot',
+            'exercise_category_id' => $category->id,
             'image' => UploadedFile::fake()->image('exercise.jpg'),
             'difficulty' => 3,
             'default_max_score' => 20,
@@ -161,11 +172,12 @@ test('teacher can create an exercise with a default max score', function () {
 test('image is required when creating an exercise', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
+    $category = ExerciseCategory::factory()->create();
 
     $response = $this
         ->actingAs($user)
         ->post(route('exercises.store'), [
-            'category' => 'stop_shot',
+            'exercise_category_id' => $category->id,
             'difficulty' => 3,
         ]);
 
@@ -184,25 +196,26 @@ test('category is required when creating an exercise', function () {
             'difficulty' => 3,
         ]);
 
-    $response->assertSessionHasErrors('category');
+    $response->assertSessionHasErrors('exercise_category_id');
 });
 
 test('difficulty is required when creating an exercise', function () {
     Storage::fake('public');
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
+    $category = ExerciseCategory::factory()->create();
 
     $response = $this
         ->actingAs($user)
         ->post(route('exercises.store'), [
-            'category' => 'stop_shot',
+            'exercise_category_id' => $category->id,
             'image' => UploadedFile::fake()->image('exercise.jpg'),
         ]);
 
     $response->assertSessionHasErrors('difficulty');
 });
 
-test('category must be a valid enum value', function () {
+test('category must be a valid exercise category', function () {
     Storage::fake('public');
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
@@ -210,23 +223,24 @@ test('category must be a valid enum value', function () {
     $response = $this
         ->actingAs($user)
         ->post(route('exercises.store'), [
-            'category' => 'invalid_category',
+            'exercise_category_id' => 99999,
             'image' => UploadedFile::fake()->image('exercise.jpg'),
             'difficulty' => 3,
         ]);
 
-    $response->assertSessionHasErrors('category');
+    $response->assertSessionHasErrors('exercise_category_id');
 });
 
 test('difficulty must be between 1 and 5', function () {
     Storage::fake('public');
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
+    $category = ExerciseCategory::factory()->create();
 
     $this
         ->actingAs($user)
         ->post(route('exercises.store'), [
-            'category' => 'stop_shot',
+            'exercise_category_id' => $category->id,
             'image' => UploadedFile::fake()->image('exercise.jpg'),
             'difficulty' => 0,
         ])
@@ -235,7 +249,7 @@ test('difficulty must be between 1 and 5', function () {
     $this
         ->actingAs($user)
         ->post(route('exercises.store'), [
-            'category' => 'stop_shot',
+            'exercise_category_id' => $category->id,
             'image' => UploadedFile::fake()->image('exercise.jpg'),
             'difficulty' => 6,
         ])
@@ -262,6 +276,7 @@ test('edit exercise page is displayed', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
     $exercise = Exercise::factory()->create();
+    ExerciseCategory::factory()->count(3)->create();
 
     $response = $this
         ->actingAs($user)
@@ -271,7 +286,7 @@ test('edit exercise page is displayed', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('exercises/edit')
         ->where('exercise.id', $exercise->id)
-        ->has('categories', count(ExerciseCategory::cases()))
+        ->has('categories', 4)
     );
 });
 
@@ -280,11 +295,12 @@ test('teacher can update an exercise', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
     $exercise = Exercise::factory()->create();
+    $backSpin = ExerciseCategory::factory()->create(['name' => 'Back Spin', 'slug' => 'back-spin']);
 
     $response = $this
         ->actingAs($user)
         ->put(route('exercises.update', $exercise), [
-            'category' => 'back_spin',
+            'exercise_category_id' => $backSpin->id,
             'image' => UploadedFile::fake()->image('updated.jpg'),
             'description' => 'Updated description.',
             'difficulty' => 5,
@@ -294,7 +310,7 @@ test('teacher can update an exercise', function () {
     $response->assertRedirect(route('exercises.show', $exercise));
 
     $exercise->refresh();
-    expect($exercise->category)->toBe(ExerciseCategory::BackSpin);
+    expect($exercise->exercise_category_id)->toBe($backSpin->id);
     expect($exercise->description)->toBe('Updated description.');
     expect($exercise->difficulty)->toBe(5);
     Storage::disk('public')->assertExists($exercise->image_path);
@@ -303,12 +319,13 @@ test('teacher can update an exercise', function () {
 test('teacher can update an exercise without changing image', function () {
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
+    $category = ExerciseCategory::factory()->create();
     $exercise = Exercise::factory()->create(['image_path' => 'exercises/original.jpg']);
 
     $response = $this
         ->actingAs($user)
         ->put(route('exercises.update', $exercise), [
-            'category' => 'back_spin',
+            'exercise_category_id' => $category->id,
             'difficulty' => 4,
         ]);
 
@@ -326,7 +343,7 @@ test('teacher can update the default max score', function () {
     $response = $this
         ->actingAs($user)
         ->put(route('exercises.update', $exercise), [
-            'category' => $exercise->category->value,
+            'exercise_category_id' => $exercise->exercise_category_id,
             'difficulty' => $exercise->difficulty,
             'default_max_score' => 15,
         ]);
@@ -338,16 +355,18 @@ test('teacher can update the default max score', function () {
 });
 
 test('exercise name is dynamically generated', function () {
+    $category = ExerciseCategory::factory()->create(['name' => 'Basic Potting', 'slug' => 'basic-potting']);
+
     $first = Exercise::factory()->create([
-        'category' => ExerciseCategory::BasicPotting,
+        'exercise_category_id' => $category->id,
         'difficulty' => 3,
     ]);
     $second = Exercise::factory()->create([
-        'category' => ExerciseCategory::BasicPotting,
+        'exercise_category_id' => $category->id,
         'difficulty' => 3,
     ]);
     $different = Exercise::factory()->create([
-        'category' => ExerciseCategory::BasicPotting,
+        'exercise_category_id' => $category->id,
         'difficulty' => 4,
     ]);
 
@@ -390,4 +409,53 @@ test('unauthenticated users cannot access exercises', function () {
     $this->get(route('exercises.index'))->assertRedirect(route('login'));
     $this->get(route('exercises.create'))->assertRedirect(route('login'));
     $this->post(route('exercises.store'))->assertRedirect(route('login'));
+});
+
+test('teacher can create a new exercise category', function () {
+    $user = User::factory()->create();
+    School::factory()->forUser($user)->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->postJson(route('exercise-categories.store'), [
+            'name' => 'Side Spin',
+        ]);
+
+    $response->assertCreated();
+    $response->assertJsonStructure(['value', 'label']);
+    $response->assertJson(['label' => 'Side Spin']);
+
+    $this->assertDatabaseHas('exercise_categories', [
+        'name' => 'Side Spin',
+        'slug' => 'side-spin',
+    ]);
+});
+
+test('exercise category name must be unique', function () {
+    $user = User::factory()->create();
+    School::factory()->forUser($user)->create();
+    ExerciseCategory::factory()->create(['name' => 'Side Spin']);
+
+    $response = $this
+        ->actingAs($user)
+        ->postJson(route('exercise-categories.store'), [
+            'name' => 'Side Spin',
+        ]);
+
+    $response->assertUnprocessable();
+    $response->assertJsonValidationErrors('name');
+});
+
+test('exercise category name is required', function () {
+    $user = User::factory()->create();
+    School::factory()->forUser($user)->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->postJson(route('exercise-categories.store'), [
+            'name' => '',
+        ]);
+
+    $response->assertUnprocessable();
+    $response->assertJsonValidationErrors('name');
 });

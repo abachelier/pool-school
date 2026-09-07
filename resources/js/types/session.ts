@@ -13,8 +13,8 @@ export type TrainingSession = {
 
 export type Exercise = {
     id: number;
+    exercise_category_id: number;
     name: string;
-    category: string;
     category_label?: string;
     description: string | null;
     image_path: string;
@@ -30,7 +30,7 @@ export type SessionExercise = Exercise & {
 };
 
 export type ExerciseCategoryOption = {
-    value: string;
+    value: number;
     label: string;
 };
 

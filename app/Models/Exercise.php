@@ -2,19 +2,19 @@
 
 namespace App\Models;
 
-use App\Enums\ExerciseCategory;
 use Database\Factories\ExerciseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int $exercise_category_id
  * @property string $name
- * @property ExerciseCategory $category
  * @property string|null $description
  * @property string $image_path
  * @property int $difficulty
@@ -22,8 +22,9 @@ use Illuminate\Support\Carbon;
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read ExerciseCategory $exerciseCategory
  */
-#[Fillable(['category', 'description', 'image_path', 'difficulty', 'default_max_score', 'is_active'])]
+#[Fillable(['exercise_category_id', 'description', 'image_path', 'difficulty', 'default_max_score', 'is_active'])]
 class Exercise extends Model
 {
     /** @use HasFactory<ExerciseFactory> */
@@ -40,10 +41,17 @@ class Exercise extends Model
     protected function casts(): array
     {
         return [
-            'category' => ExerciseCategory::class,
             'difficulty' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * @return BelongsTo<ExerciseCategory, $this>
+     */
+    public function exerciseCategory(): BelongsTo
+    {
+        return $this->belongsTo(ExerciseCategory::class);
     }
 
     /**
@@ -54,12 +62,12 @@ class Exercise extends Model
     protected function name(): Attribute
     {
         return Attribute::get(function (): string {
-            $increment = static::where('category', $this->category)
+            $increment = static::where('exercise_category_id', $this->exercise_category_id)
                 ->where('difficulty', $this->difficulty)
                 ->where('id', '<=', $this->id)
                 ->count();
 
-            return $this->category->slug().'-'.$this->difficulty.'-'.$increment;
+            return $this->exerciseCategory->slug.'-'.$this->difficulty.'-'.$increment;
         });
     }
 
@@ -70,7 +78,7 @@ class Exercise extends Model
      */
     protected function categoryLabel(): Attribute
     {
-        return Attribute::get(fn (): string => $this->category->label());
+        return Attribute::get(fn (): string => $this->exerciseCategory->name);
     }
 
     /**

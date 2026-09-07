@@ -22,7 +22,7 @@ export default function ExercisesIndex({
         let currentCategory: string | null = null;
 
         for (const exercise of exercises) {
-            const label = exercise.category_label ?? exercise.category;
+            const label = exercise.category_label ?? '';
             if (label !== currentCategory) {
                 currentCategory = label;
                 groups.push({ category: label, exercises: [] });

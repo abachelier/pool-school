@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Enums\ExerciseCategory;
 use App\Models\Exercise;
+use App\Models\ExerciseCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +19,7 @@ class ExerciseFactory extends Factory
     public function definition(): array
     {
         return [
-            'category' => fake()->randomElement(ExerciseCategory::cases()),
+            'exercise_category_id' => ExerciseCategory::factory(),
             'description' => fake()->optional()->sentence(),
             'image_path' => 'exercises/'.fake()->uuid().'.jpg',
             'difficulty' => fake()->numberBetween(1, 5),

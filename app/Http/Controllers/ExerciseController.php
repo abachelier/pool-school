@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ExerciseCategory;
 use App\Http\Requests\Exercises\StoreExerciseRequest;
 use App\Http\Requests\Exercises\UpdateExerciseRequest;
 use App\Models\Exercise;
+use App\Models\ExerciseCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +19,7 @@ class ExerciseController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Exercise::query();
+        $query = Exercise::with('exerciseCategory');
 
         if ($request->boolean('archived')) {
             $query->archived();
@@ -28,11 +28,11 @@ class ExerciseController extends Controller
         }
 
         return Inertia::render('exercises/index', [
-            'exercises' => $query->orderBy('category')->orderBy('difficulty')->orderBy('id')->get(),
+            'exercises' => $query->orderBy('exercise_category_id')->orderBy('difficulty')->orderBy('id')->get(),
             'isShowingArchived' => $request->boolean('archived'),
-            'categories' => collect(ExerciseCategory::cases())->map(fn (ExerciseCategory $c) => [
-                'value' => $c->value,
-                'label' => $c->label(),
+            'categories' => ExerciseCategory::orderBy('name')->get()->map(fn (ExerciseCategory $c) => [
+                'value' => $c->id,
+                'label' => $c->name,
             ])->all(),
         ]);
     }
@@ -43,9 +43,9 @@ class ExerciseController extends Controller
     public function create(): Response
     {
         return Inertia::render('exercises/create', [
-            'categories' => collect(ExerciseCategory::cases())->map(fn (ExerciseCategory $c) => [
-                'value' => $c->value,
-                'label' => $c->label(),
+            'categories' => ExerciseCategory::orderBy('name')->get()->map(fn (ExerciseCategory $c) => [
+                'value' => $c->id,
+                'label' => $c->name,
             ])->all(),
         ]);
     }
@@ -71,7 +71,7 @@ class ExerciseController extends Controller
     public function show(Exercise $exercise): Response
     {
         return Inertia::render('exercises/show', [
-            'exercise' => $exercise,
+            'exercise' => $exercise->load('exerciseCategory'),
         ]);
     }
 
@@ -81,10 +81,10 @@ class ExerciseController extends Controller
     public function edit(Exercise $exercise): Response
     {
         return Inertia::render('exercises/edit', [
-            'exercise' => $exercise,
-            'categories' => collect(ExerciseCategory::cases())->map(fn (ExerciseCategory $c) => [
-                'value' => $c->value,
-                'label' => $c->label(),
+            'exercise' => $exercise->load('exerciseCategory'),
+            'categories' => ExerciseCategory::orderBy('name')->get()->map(fn (ExerciseCategory $c) => [
+                'value' => $c->id,
+                'label' => $c->name,
             ])->all(),
         ]);
     }

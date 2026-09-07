@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ExerciseCategoryController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PupilController;
@@ -34,6 +35,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('exercises', ExerciseController::class)->except(['destroy']);
         Route::patch('exercises/{exercise}/archive', [ExerciseController::class, 'archive'])->name('exercises.archive');
         Route::patch('exercises/{exercise}/restore', [ExerciseController::class, 'restore'])->name('exercises.restore');
+        Route::post('exercise-categories', [ExerciseCategoryController::class, 'store'])->name('exercise-categories.store');
 
         Route::scopeBindings()->group(function () {
             Route::resource('schools.pupils', PupilController::class)->except(['destroy']);

@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
+import CreatableCategorySelect from '@/components/creatable-category-select';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -34,25 +35,14 @@ export default function ExercisesEdit({ exercise, categories }: PageProps) {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="category">Category</Label>
-                                <select
-                                    id="category"
-                                    name="category"
+                                <Label htmlFor="exercise_category_id">Category</Label>
+                                <CreatableCategorySelect
+                                    name="exercise_category_id"
+                                    categories={categories}
+                                    defaultValue={exercise.exercise_category_id}
                                     required
-                                    defaultValue={exercise.category}
-                                    className="border-input bg-background text-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    <option value="">Select a category</option>
-                                    {categories.map((cat) => (
-                                        <option
-                                            key={cat.value}
-                                            value={cat.value}
-                                        >
-                                            {cat.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.category} />
+                                />
+                                <InputError message={errors.exercise_category_id} />
                             </div>
 
                             <div className="grid gap-2">

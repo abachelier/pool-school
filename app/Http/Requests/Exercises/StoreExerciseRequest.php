@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests\Exercises;
 
-use App\Enums\ExerciseCategory;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreExerciseRequest extends FormRequest
 {
@@ -25,7 +23,7 @@ class StoreExerciseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category' => ['required', Rule::enum(ExerciseCategory::class)],
+            'exercise_category_id' => ['required', 'exists:exercise_categories,id'],
             'image' => ['required', 'image', 'max:5120'],
             'description' => ['nullable', 'string', 'max:5000'],
             'difficulty' => ['required', 'integer', 'min:1', 'max:5'],
