@@ -56,7 +56,7 @@ class ExerciseController extends Controller
     public function store(StoreExerciseRequest $request): RedirectResponse
     {
         $data = $request->safe()->except('image');
-        $data['image_path'] = $request->file('image')->store('exercises', 'public');
+        $data['image_path'] = $request->file('image')->store('exercises');
 
         $exercise = Exercise::create($data);
 
@@ -97,8 +97,8 @@ class ExerciseController extends Controller
         $data = $request->safe()->except('image');
 
         if ($request->hasFile('image')) {
-            Storage::disk('public')->delete($exercise->image_path);
-            $data['image_path'] = $request->file('image')->store('exercises', 'public');
+            Storage::disk('local')->delete($exercise->image_path);
+            $data['image_path'] = $request->file('image')->store('exercises');
         }
 
         $exercise->update($data);

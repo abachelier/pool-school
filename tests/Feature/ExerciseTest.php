@@ -119,7 +119,7 @@ test('create exercise page is displayed', function () {
 });
 
 test('teacher can create an exercise', function () {
-    Storage::fake('public');
+    Storage::fake();
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
     $category = ExerciseCategory::factory()->create(['name' => 'Stop Shot', 'slug' => 'stop-shot']);
@@ -143,13 +143,13 @@ test('teacher can create an exercise', function () {
     expect($exercise->difficulty)->toBe(3);
     expect($exercise->default_max_score)->toBeNull();
     expect($exercise->is_active)->toBeTrue();
-    Storage::disk('public')->assertExists($exercise->image_path);
+    Storage::disk('local')->assertExists($exercise->image_path);
 
     $response->assertRedirect(route('exercises.show', $exercise));
 });
 
 test('teacher can create an exercise with a default max score', function () {
-    Storage::fake('public');
+    Storage::fake();
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
     $category = ExerciseCategory::factory()->create();
@@ -185,7 +185,7 @@ test('image is required when creating an exercise', function () {
 });
 
 test('category is required when creating an exercise', function () {
-    Storage::fake('public');
+    Storage::fake();
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
 
@@ -200,7 +200,7 @@ test('category is required when creating an exercise', function () {
 });
 
 test('difficulty is required when creating an exercise', function () {
-    Storage::fake('public');
+    Storage::fake();
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
     $category = ExerciseCategory::factory()->create();
@@ -216,7 +216,7 @@ test('difficulty is required when creating an exercise', function () {
 });
 
 test('category must be a valid exercise category', function () {
-    Storage::fake('public');
+    Storage::fake();
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
 
@@ -232,7 +232,7 @@ test('category must be a valid exercise category', function () {
 });
 
 test('difficulty must be between 1 and 5', function () {
-    Storage::fake('public');
+    Storage::fake();
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
     $category = ExerciseCategory::factory()->create();
@@ -291,7 +291,7 @@ test('edit exercise page is displayed', function () {
 });
 
 test('teacher can update an exercise', function () {
-    Storage::fake('public');
+    Storage::fake();
     $user = User::factory()->create();
     School::factory()->forUser($user)->create();
     $exercise = Exercise::factory()->create();
@@ -313,7 +313,7 @@ test('teacher can update an exercise', function () {
     expect($exercise->exercise_category_id)->toBe($backSpin->id);
     expect($exercise->description)->toBe('Updated description.');
     expect($exercise->difficulty)->toBe(5);
-    Storage::disk('public')->assertExists($exercise->image_path);
+    Storage::disk('local')->assertExists($exercise->image_path);
 });
 
 test('teacher can update an exercise without changing image', function () {

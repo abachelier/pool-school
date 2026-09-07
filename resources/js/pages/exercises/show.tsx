@@ -82,7 +82,7 @@ export default function ExercisesShow({ exercise }: PageProps) {
                 <div className="max-w-lg space-y-4 rounded-lg border p-6">
                     <div>
                         <img
-                            src={`/storage/${exercise.image_path}`}
+                            src={exercise.image_url}
                             alt={exercise.name}
                             className="h-48 w-full cursor-pointer rounded-md object-cover"
                             onClick={() => setImageOpen(true)}
@@ -99,7 +99,7 @@ export default function ExercisesShow({ exercise }: PageProps) {
                                 <span className="sr-only">Close</span>
                             </DialogClose>
                             <img
-                                src={`/storage/${exercise.image_path}`}
+                                src={exercise.image_url}
                                 alt={exercise.name}
                                 className="max-h-[90vh] max-w-full object-contain"
                             />

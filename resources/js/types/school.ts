@@ -3,6 +3,7 @@ export type School = {
     name: string;
     description: string | null;
     logo_path: string | null;
+    logo_url: string | null;
     created_at: string;
     updated_at: string;
 };

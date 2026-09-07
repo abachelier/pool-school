@@ -69,9 +69,9 @@ class SchoolController extends Controller
 
         if ($request->hasFile('logo')) {
             if ($school->logo_path) {
-                Storage::disk('public')->delete($school->logo_path);
+                Storage::disk('local')->delete($school->logo_path);
             }
-            $data['logo_path'] = $request->file('logo')->store('schools', 'public');
+            $data['logo_path'] = $request->file('logo')->store('schools');
         }
 
         $school->update($data);

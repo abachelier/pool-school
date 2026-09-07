@@ -175,7 +175,7 @@ test('creating a school assigns user as admin', function () {
 });
 
 test('admin can upload a logo when updating a school', function () {
-    Storage::fake('public');
+    Storage::fake();
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create();
 
@@ -191,14 +191,14 @@ test('admin can upload a logo when updating a school', function () {
 
     $school->refresh();
     expect($school->logo_path)->not->toBeNull();
-    Storage::disk('public')->assertExists($school->logo_path);
+    Storage::disk('local')->assertExists($school->logo_path);
 });
 
 test('uploading a new logo deletes the previous one', function () {
-    Storage::fake('public');
+    Storage::fake();
     $user = User::factory()->create();
     $school = School::factory()->forUser($user)->create(['logo_path' => 'schools/old-logo.png']);
-    Storage::disk('public')->put('schools/old-logo.png', 'old');
+    Storage::disk('local')->put('schools/old-logo.png', 'old');
 
     $this
         ->actingAs($user)
@@ -208,8 +208,8 @@ test('uploading a new logo deletes the previous one', function () {
         ]);
 
     $school->refresh();
-    Storage::disk('public')->assertMissing('schools/old-logo.png');
-    Storage::disk('public')->assertExists($school->logo_path);
+    Storage::disk('local')->assertMissing('schools/old-logo.png');
+    Storage::disk('local')->assertExists($school->logo_path);
 });
 
 test('school can be updated without changing the logo', function () {

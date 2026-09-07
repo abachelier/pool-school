@@ -97,7 +97,7 @@ export default function ExercisesIndex({
                                             prefetch
                                         >
                                             <img
-                                                src={`/storage/${exercise.image_path}`}
+                                                src={exercise.image_url}
                                                 alt={exercise.name}
                                                 className="h-28 w-full object-cover"
                                             />

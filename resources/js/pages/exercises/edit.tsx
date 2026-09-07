@@ -52,9 +52,9 @@ export default function ExercisesEdit({ exercise, categories }: PageProps) {
                                         (leave empty to keep current)
                                     </span>
                                 </Label>
-                                {exercise.image_path && (
+                                {exercise.image_url && (
                                     <img
-                                        src={`/storage/${exercise.image_path}`}
+                                        src={exercise.image_url}
                                         alt={exercise.name}
                                         className="h-32 w-32 rounded-md object-cover"
                                     />

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
@@ -23,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read ExerciseCategory $exerciseCategory
+ * @property-read string $image_url
  */
 #[Fillable(['exercise_category_id', 'description', 'image_path', 'difficulty', 'default_max_score', 'is_active'])]
 class Exercise extends Model
@@ -31,7 +33,7 @@ class Exercise extends Model
     use HasFactory;
 
     /** @var list<string> */
-    protected $appends = ['name', 'category_label'];
+    protected $appends = ['name', 'category_label', 'image_url'];
 
     /**
      * Get the attributes that should be cast.
@@ -69,6 +71,16 @@ class Exercise extends Model
 
             return $this->exerciseCategory->slug.'-'.$this->difficulty.'-'.$increment;
         });
+    }
+
+    /**
+     * Full URL for the exercise image served from private storage.
+     *
+     * @return Attribute<string, never>
+     */
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(fn (): string => Storage::temporaryUrl($this->image_path, now()->addMinutes(30)));
     }
 
     /**

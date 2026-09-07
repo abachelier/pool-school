@@ -48,9 +48,9 @@ export function SchoolSwitcher() {
                             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                         >
                             <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg">
-                                {currentSchool?.logo_path ? (
+                                {currentSchool?.logo_url ? (
                                     <img
-                                        src={`/storage/${currentSchool.logo_path}`}
+                                        src={currentSchool.logo_url}
                                         alt={currentSchool.name}
                                         className="size-8 object-cover"
                                     />
@@ -88,9 +88,9 @@ export function SchoolSwitcher() {
                                 className="cursor-pointer gap-2 p-2"
                             >
                                 <div className="flex size-6 items-center justify-center overflow-hidden rounded-sm border">
-                                    {school.logo_path ? (
+                                    {school.logo_url ? (
                                         <img
-                                            src={`/storage/${school.logo_path}`}
+                                            src={school.logo_url}
                                             alt={school.name}
                                             className="size-6 object-cover"
                                         />

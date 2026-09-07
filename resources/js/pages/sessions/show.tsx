@@ -315,7 +315,7 @@ export default function SessionsShow({
                                     >
                                         {exercise.image_path && (
                                             <img
-                                                src={`/storage/${exercise.image_path}`}
+                                                src={exercise.image_url}
                                                 alt={exercise.name}
                                                 className="h-24 w-full object-cover sm:h-28"
                                             />

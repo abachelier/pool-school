@@ -48,9 +48,9 @@ export default function SchoolsShow({ school }: PageProps) {
                                         (optional)
                                     </span>
                                 </Label>
-                                {school.logo_path && (
+                                {school.logo_url && (
                                     <img
-                                        src={`/storage/${school.logo_path}`}
+                                        src={school.logo_url}
                                         alt={school.name}
                                         className="h-16 w-16 rounded-md object-cover"
                                     />

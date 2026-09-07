@@ -12,7 +12,7 @@ export type User = {
 export type SchoolSummary = {
     id: number;
     name: string;
-    logo_path: string | null;
+    logo_url: string | null;
 };
 
 export type PendingInvitation = {

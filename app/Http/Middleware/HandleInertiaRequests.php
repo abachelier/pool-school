@@ -46,7 +46,7 @@ class HandleInertiaRequests extends Middleware
             $schools = $user->schools()->select('schools.id', 'schools.name', 'schools.logo_path')->get()->map(fn ($school) => [
                 'id' => $school->id,
                 'name' => $school->name,
-                'logo_path' => $school->logo_path,
+                'logo_url' => $school->logo_url,
             ])->all();
 
             if (count($schools) > 0) {

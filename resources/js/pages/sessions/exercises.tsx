@@ -100,7 +100,7 @@ export default function SessionExercises({
                                     )}
                                     {exercise.image_path && (
                                         <img
-                                            src={`/storage/${exercise.image_path}`}
+                                            src={exercise.image_url}
                                             alt={exercise.name}
                                             className="h-36 w-full object-cover"
                                         />

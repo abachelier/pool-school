@@ -18,6 +18,7 @@ export type Exercise = {
     category_label?: string;
     description: string | null;
     image_path: string;
+    image_url: string;
     difficulty: number;
     default_max_score: number | null;
     is_active: boolean;
