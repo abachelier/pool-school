@@ -47,7 +47,7 @@ class TrainingSessionController extends Controller
         return Inertia::render('sessions/create', [
             'school' => $school,
             'pupils' => $school->pupils()->active()->orderBy('name')->get(),
-            'exercises' => Exercise::active()->orderBy('category')->orderBy('difficulty')->get(),
+            'exercises' => Exercise::active()->orderBy('exercise_category_id')->orderBy('difficulty')->get(),
         ]);
     }
 
@@ -167,7 +167,7 @@ class TrainingSessionController extends Controller
 
         $exercises = Exercise::active()
             ->whereNotIn('id', $attachedIds)
-            ->orderBy('category')
+            ->orderBy('exercise_category_id')
             ->orderBy('difficulty')
             ->get();
 
